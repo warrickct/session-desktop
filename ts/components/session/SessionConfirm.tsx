@@ -102,6 +102,7 @@ const SessionConfirmInner = (props: SessionConfirmDialogProps) => {
       </div>
 
       <div className="session-modal__button-group">
+        <SessionButton text={okText} buttonColor={okTheme} onClick={onClickOkHandler} />
         {!hideCancel && (
           <SessionButton
             text={cancelText}
@@ -109,7 +110,6 @@ const SessionConfirmInner = (props: SessionConfirmDialogProps) => {
             onClick={onClickCancelHandler}
           />
         )}
-        <SessionButton text={okText} buttonColor={okTheme} onClick={onClickOkHandler} />
       </div>
     </SessionWrapperModal>
   );
