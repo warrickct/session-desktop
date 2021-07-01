@@ -14,7 +14,7 @@ import {
 
 import { StringUtils, UserUtils } from '../../session/utils';
 import { ConversationModel } from '../../models/conversation';
-import { DURATION, SWARM_POLLING_TIMEOUT } from '../constants';
+import { DURATION, SWARM_POLLING_ACTIVITY, SWARM_POLLING_TIMEOUT } from '../constants';
 import { getConversationController } from '../conversations';
 
 type PubkeyToHash = { [key: string]: string };
@@ -109,23 +109,27 @@ export class SwarmPolling {
     const currentTimestamp = Date.now();
 
     // consider that this is an active group if activeAt is less than an hour old
-    if (currentTimestamp - activeAt <= DURATION.HOURS * 1) {
-      return SWARM_POLLING_TIMEOUT.ACTIVE;
-    }
 
-    if (currentTimestamp - activeAt <= DURATION.DAYS * 1) {
-      return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
-    }
+    // if (currentTimestamp - activeAt <= SWARM_POLLING_ACTIVITY.ACTIVE) {
+    //   return SWARM_POLLING_TIMEOUT.ACTIVE;
+    // }
 
-    return SWARM_POLLING_TIMEOUT.INACTIVE;
+    // if (currentTimestamp - activeAt <= SWARM_POLLING_ACTIVITY.MEDIUM_ACTIVE) {
+    //   return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
+    // }
+
+    // return SWARM_POLLING_TIMEOUT.INACTIVE;
+    // return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
+    return SWARM_POLLING_TIMEOUT.ACTIVE;
   }
 
   /**
    * Only public for testing
    */
-  public async TEST_pollForAllKeys() {
+  public async TEST_pollForAllKeys(): Promise<boolean | void> {
     // we always poll as often as possible for our pubkey
     const ourPubkey = UserUtils.getOurPubKeyFromCache();
+    window?.log.info('@Polling our own key')
     const directPromise = this.TEST_pollOnceForKey(ourPubkey, false);
 
     const now = Date.now();
@@ -141,8 +145,9 @@ export class SwarmPolling {
 
       if (diff >= convoPollingTimeout) {
         (window?.log?.info || console.warn)(
-          `Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
+          `@Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
         );
+        // const gotNewMsg = await this.TEST_pollOnceForKey(group.pubkey, true);
         return this.TEST_pollOnceForKey(group.pubkey, true);
       }
       (window?.log?.info || console.warn)(
@@ -152,7 +157,14 @@ export class SwarmPolling {
       return Promise.resolve();
     });
     try {
-      await Promise.all(_.concat(directPromise, groupPromises));
+      const pollResults = await Promise.all(_.concat(directPromise, groupPromises));
+      // _.filter(pollResults, res => res === true)
+      //   .map((val: any, index: number) => {
+      //     console.log(`@@@ new messages included in ${index} poll, repolling the same one`);
+      //     // this.TEST_pollOnceForKey(this.groupPolling[index].pubkey, true);
+      //     this.TEST_pollOnceForKey(this.groupPolling[index].pubkey, true);
+      //     this.TEST_pollForAllKeys();
+      //   })
     } catch (e) {
       (window?.log?.info || console.warn)('pollForAllKeys swallowing exception: ', e);
       throw e;
@@ -164,7 +176,7 @@ export class SwarmPolling {
   /**
    * Only exposed as public for testing
    */
-  public async TEST_pollOnceForKey(pubkey: PubKey, isGroup: boolean) {
+  public async TEST_pollOnceForKey(pubkey: PubKey, isGroup: boolean): Promise<boolean> {
     // NOTE: sometimes pubkey is string, sometimes it is object, so
     // accept both until this is fixed:
     const pkStr = pubkey.key;
@@ -219,6 +231,8 @@ export class SwarmPolling {
       const options = isGroup ? { conversationId: pkStr } : {};
       processMessage(m.data, options);
     });
+
+    return newMessages.length > 0;
   }
 
   // Fetches messages for `pubkey` from `node` potentially updating
