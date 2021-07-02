@@ -18,15 +18,17 @@ export const TTL_DEFAULT = {
 };
 
 export const SWARM_POLLING_TIMEOUT = {
+  MOST_ACTIVE: DURATION.SECONDS * 1,
   ACTIVE: DURATION.SECONDS * 5,
   MEDIUM_ACTIVE: DURATION.SECONDS * 30,
   INACTIVE: DURATION.MINUTES * 1,
 };
 
 export const SWARM_POLLING_ACTIVITY = {
+  MOST_ACTIVE: DURATION.SECONDS * 30,
   ACTIVE: DURATION.HOURS * 1,
   MEDIUM_ACTIVE: DURATION.DAYS * 1,
-}
+};
 
 export const PROTOCOLS = {
   // tslint:disable-next-line: no-http-string

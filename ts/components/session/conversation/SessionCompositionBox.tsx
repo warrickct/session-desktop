@@ -387,12 +387,12 @@ export class SessionCompositionBox extends React.Component<Props, State> {
     const messagePlaceHolder = isKickedFromGroup
       ? i18n('youGotKickedFromGroup')
       : left
-        ? i18n('youLeftTheGroup')
-        : isBlocked && isPrivate
-          ? i18n('unblockToSend')
-          : isBlocked && !isPrivate
-            ? i18n('unblockGroupToSend')
-            : i18n('sendMessage');
+      ? i18n('youLeftTheGroup')
+      : isBlocked && isPrivate
+      ? i18n('unblockToSend')
+      : isBlocked && !isPrivate
+      ? i18n('unblockGroupToSend')
+      : i18n('sendMessage');
     const typingEnabled = this.isTypingEnabled();
     let index = 0;
 
@@ -848,44 +848,14 @@ export class SessionCompositionBox extends React.Component<Props, State> {
 
     try {
       const attachments = await this.getFiles();
-      if (messagePlaintext.includes('test--')) {
-        await this.props.sendMessage(
-          `Started at: ${Date.now()}`,
-          attachments,
-          extractedQuotedMessageProps,
-          linkPreviews,
-          null,
-          {}
-        );
-        for (let i: number = 0; i < 30; i++) {
-          window.log.info(`Sending message ${i}`);
-          await this.props.sendMessage(
-            messagePlaintext + `msg: ${i}`,
-            attachments,
-            extractedQuotedMessageProps,
-            linkPreviews,
-            null,
-            {}
-          );
-        }
-        await this.props.sendMessage(
-          `Finished at: ${Date.now()}`,
-          attachments,
-          extractedQuotedMessageProps,
-          linkPreviews,
-          null,
-          {}
-        );
-      } else {
-        await this.props.sendMessage(
-          messagePlaintext,
-          attachments,
-          extractedQuotedMessageProps,
-          linkPreviews,
-          null,
-          {}
-        );
-      }
+      await this.props.sendMessage(
+        messagePlaintext,
+        attachments,
+        extractedQuotedMessageProps,
+        linkPreviews,
+        null,
+        {}
+      );
 
       // Message sending sucess
       this.props.onMessageSuccess();

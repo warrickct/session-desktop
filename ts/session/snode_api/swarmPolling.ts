@@ -108,19 +108,19 @@ export class SwarmPolling {
 
     const currentTimestamp = Date.now();
 
+    const lastActive = currentTimestamp - activeAt;
+    // Handle case to load when a user is updating on a lot of messages
+    if (lastActive < SWARM_POLLING_ACTIVITY.MOST_ACTIVE) {
+      return SWARM_POLLING_TIMEOUT.MOST_ACTIVE;
+    }
     // consider that this is an active group if activeAt is less than an hour old
-
-    // if (currentTimestamp - activeAt <= SWARM_POLLING_ACTIVITY.ACTIVE) {
-    //   return SWARM_POLLING_TIMEOUT.ACTIVE;
-    // }
-
-    // if (currentTimestamp - activeAt <= SWARM_POLLING_ACTIVITY.MEDIUM_ACTIVE) {
-    //   return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
-    // }
-
-    // return SWARM_POLLING_TIMEOUT.INACTIVE;
-    // return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
-    return SWARM_POLLING_TIMEOUT.ACTIVE;
+    if (lastActive <= SWARM_POLLING_ACTIVITY.ACTIVE) {
+      return SWARM_POLLING_TIMEOUT.ACTIVE;
+    }
+    if (lastActive <= SWARM_POLLING_ACTIVITY.MEDIUM_ACTIVE) {
+      return SWARM_POLLING_TIMEOUT.MEDIUM_ACTIVE;
+    }
+    return SWARM_POLLING_TIMEOUT.INACTIVE;
   }
 
   /**
@@ -129,7 +129,6 @@ export class SwarmPolling {
   public async TEST_pollForAllKeys(): Promise<boolean | void> {
     // we always poll as often as possible for our pubkey
     const ourPubkey = UserUtils.getOurPubKeyFromCache();
-    window?.log.info('@Polling our own key')
     const directPromise = this.TEST_pollOnceForKey(ourPubkey, false);
 
     const now = Date.now();
@@ -145,9 +144,8 @@ export class SwarmPolling {
 
       if (diff >= convoPollingTimeout) {
         (window?.log?.info || console.warn)(
-          `@Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
+          `Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
         );
-        // const gotNewMsg = await this.TEST_pollOnceForKey(group.pubkey, true);
         return this.TEST_pollOnceForKey(group.pubkey, true);
       }
       (window?.log?.info || console.warn)(
@@ -157,19 +155,12 @@ export class SwarmPolling {
       return Promise.resolve();
     });
     try {
-      const pollResults = await Promise.all(_.concat(directPromise, groupPromises));
-      // _.filter(pollResults, res => res === true)
-      //   .map((val: any, index: number) => {
-      //     console.log(`@@@ new messages included in ${index} poll, repolling the same one`);
-      //     // this.TEST_pollOnceForKey(this.groupPolling[index].pubkey, true);
-      //     this.TEST_pollOnceForKey(this.groupPolling[index].pubkey, true);
-      //     this.TEST_pollForAllKeys();
-      //   })
+      await Promise.all(_.concat(directPromise, groupPromises));
     } catch (e) {
       (window?.log?.info || console.warn)('pollForAllKeys swallowing exception: ', e);
       throw e;
     } finally {
-      setTimeout(this.TEST_pollForAllKeys.bind(this), SWARM_POLLING_TIMEOUT.ACTIVE);
+      setTimeout(this.TEST_pollForAllKeys.bind(this), SWARM_POLLING_TIMEOUT.MOST_ACTIVE);
     }
   }
 
