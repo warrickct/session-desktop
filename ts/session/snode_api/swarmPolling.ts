@@ -126,13 +126,15 @@ export class SwarmPolling {
   /**
    * Only public for testing
    */
-  public async TEST_pollForAllKeys(): Promise<boolean | void> {
+  public async TEST_pollForAllKeys(repollIds?: Array<string>): Promise<boolean | void> {
     // we always poll as often as possible for our pubkey
     const ourPubkey = UserUtils.getOurPubKeyFromCache();
     const directPromise = this.TEST_pollOnceForKey(ourPubkey, false);
+    let nextPollTimeout = SWARM_POLLING_TIMEOUT.ACTIVE;
+    const idsToRepoll: Array<string> = [];
 
     const now = Date.now();
-    const groupPromises = this.groupPolling.map(async group => {
+    const groupPromises = this.groupPolling.map(async (group, index: number) => {
       const convoPollingTimeout = this.TEST_getPollingTimeout(group.pubkey);
 
       const diff = now - group.lastPolledTimestamp;
@@ -142,7 +144,7 @@ export class SwarmPolling {
           .get(group.pubkey.key)
           ?.idForLogging() || group.pubkey.key;
 
-      if (diff >= convoPollingTimeout) {
+      if (diff >= convoPollingTimeout || _.includes(repollIds, group.pubkey.key)) {
         (window?.log?.info || console.warn)(
           `Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
         );
@@ -155,12 +157,21 @@ export class SwarmPolling {
       return Promise.resolve();
     });
     try {
-      await Promise.all(_.concat(directPromise, groupPromises));
+      const pollingResults = await Promise.all(_.concat(directPromise, groupPromises));
+
+      // for cases where unread messages in a conversation is large.
+      for (let i = 0; i < pollingResults.length; i++) {
+        if (pollingResults[i] === true) {
+          idsToRepoll.push(this.groupPolling[i].pubkey.key);
+          // shorten time until next poll
+          nextPollTimeout = SWARM_POLLING_TIMEOUT.MOST_ACTIVE;
+        }
+      }
     } catch (e) {
       (window?.log?.info || console.warn)('pollForAllKeys swallowing exception: ', e);
       throw e;
     } finally {
-      setTimeout(this.TEST_pollForAllKeys.bind(this), SWARM_POLLING_TIMEOUT.MOST_ACTIVE);
+      setTimeout(this.TEST_pollForAllKeys.bind(this), nextPollTimeout, idsToRepoll);
     }
   }
 
