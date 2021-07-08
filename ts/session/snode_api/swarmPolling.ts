@@ -53,10 +53,12 @@ export const getSwarmPollingInstance = () => {
 export class SwarmPolling {
   private groupPolling: Array<{ pubkey: PubKey; lastPolledTimestamp: number }>;
   private readonly lastHashes: { [key: string]: PubkeyToHash };
+  private groupPollsSinceActive: { [key: string]: number };
 
   constructor() {
     this.groupPolling = [];
     this.lastHashes = {};
+    this.groupPollsSinceActive = {};
   }
 
   public async start(waitForFirstPoll = false): Promise<void> {
@@ -125,6 +127,13 @@ export class SwarmPolling {
    */
   public async TEST_pollForAllKeys() {
     // we always poll as often as possible for our pubkey
+
+    const getLoggingId = (group: { pubkey: PubKey }) => {
+      return getConversationController()
+        .get(group.pubkey.key)
+        ?.idForLogging() || group.pubkey.key;
+    }
+
     const ourPubkey = UserUtils.getOurPubKeyFromCache();
     const directPromise = this.TEST_pollOnceForKey(ourPubkey, false);
 
@@ -133,13 +142,9 @@ export class SwarmPolling {
       const convoPollingTimeout = this.TEST_getPollingTimeout(group.pubkey);
 
       const diff = now - group.lastPolledTimestamp;
+      const loggingId = getLoggingId(group);
 
-      const loggingId =
-        getConversationController()
-          .get(group.pubkey.key)
-          ?.idForLogging() || group.pubkey.key;
-
-      if (diff >= convoPollingTimeout) {
+      if (diff >= convoPollingTimeout || this.groupPollsSinceActive[loggingId] <= 10) {
         (window?.log?.info || console.warn)(
           `Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
         );
@@ -149,10 +154,26 @@ export class SwarmPolling {
         `Not polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
       );
 
-      return Promise.resolve();
+      return Promise.resolve(false);
     });
     try {
-      await Promise.all(_.concat(directPromise, groupPromises));
+      let pollResults = await Promise.all(_.concat(directPromise, groupPromises));
+      for (let i = 0; i < pollResults.length - 1; i++) { // minus one to exclude directPromise
+        const groupId = getLoggingId(this.groupPolling[i]);
+        if (pollResults[i] === true) {
+          window.log.info(`group received messages, resetting count to 0`)
+          this.groupPollsSinceActive[groupId] = 0;
+        } else {
+          if (!this.groupPollsSinceActive[groupId]) {
+            window.log.info(`group doesnt exist, initialising`)
+            this.groupPollsSinceActive[groupId] = 1;
+          } else {
+            window.log.info(`group exists, incrementing`)
+            this.groupPollsSinceActive[groupId]++;
+          }
+        }
+      }
+      console.table(this.groupPollsSinceActive);
     } catch (e) {
       (window?.log?.info || console.warn)('pollForAllKeys swallowing exception: ', e);
       throw e;
@@ -161,10 +182,11 @@ export class SwarmPolling {
     }
   }
 
+
   /**
    * Only exposed as public for testing
    */
-  public async TEST_pollOnceForKey(pubkey: PubKey, isGroup: boolean) {
+  public async TEST_pollOnceForKey(pubkey: PubKey, isGroup: boolean): Promise<boolean> {
     // NOTE: sometimes pubkey is string, sometimes it is object, so
     // accept both until this is fixed:
     const pkStr = pubkey.key;
@@ -183,11 +205,8 @@ export class SwarmPolling {
 
     if (nodesToPoll.length < COUNT) {
       const notPolled = _.difference(snodes, alreadyPolled);
-
       const newNeeded = COUNT - alreadyPolled.length;
-
       const newNodes = _.sampleSize(notPolled, newNeeded);
-
       nodesToPoll = _.concat(nodesToPoll, newNodes);
     }
 
@@ -219,6 +238,8 @@ export class SwarmPolling {
       const options = isGroup ? { conversationId: pkStr } : {};
       processMessage(m.data, options);
     });
+
+    return newMessages.length > 0;
   }
 
   // Fetches messages for `pubkey` from `node` potentially updating
