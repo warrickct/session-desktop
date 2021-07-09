@@ -59,6 +59,7 @@ export class SwarmPolling {
     this.groupPolling = [];
     this.lastHashes = {};
     this.groupPollsSinceActive = {};
+
   }
 
   public async start(waitForFirstPoll = false): Promise<void> {
@@ -140,11 +141,13 @@ export class SwarmPolling {
     const now = Date.now();
     const groupPromises = this.groupPolling.map(async group => {
       const convoPollingTimeout = this.TEST_getPollingTimeout(group.pubkey);
+      // const convoPollingTimeout = 500;
+      this.loadGroupIds();
 
       const diff = now - group.lastPolledTimestamp;
       const loggingId = getLoggingId(group);
 
-      if (diff >= convoPollingTimeout || this.groupPollsSinceActive[loggingId] <= 10) {
+      if (diff >= convoPollingTimeout || this.groupPollsSinceActive[loggingId] <= 15) {
         (window?.log?.info || console.warn)(
           `Polling for ${loggingId}; timeout: ${convoPollingTimeout} ; diff: ${diff}`
         );
@@ -157,10 +160,12 @@ export class SwarmPolling {
       return Promise.resolve(false);
     });
     try {
-      let pollResults = await Promise.all(_.concat(directPromise, groupPromises));
-      for (let i = 0; i < pollResults.length - 1; i++) { // minus one to exclude directPromise
+      await Promise.all([directPromise, ...groupPromises]);
+      const groupResults = await Promise.all(groupPromises);
+      for (let i = 0; i < groupResults.length; i++) { 
         const groupId = getLoggingId(this.groupPolling[i]);
-        if (pollResults[i] === true) {
+          window.log.info(`groupId: ${groupId}`)
+        if (groupResults[i] === true) {
           window.log.info(`group received messages, resetting count to 0`)
           this.groupPollsSinceActive[groupId] = 0;
         } else {
@@ -178,6 +183,7 @@ export class SwarmPolling {
       (window?.log?.info || console.warn)('pollForAllKeys swallowing exception: ', e);
       throw e;
     } finally {
+      // setTimeout(this.TEST_pollForAllKeys.bind(this), 500);
       setTimeout(this.TEST_pollForAllKeys.bind(this), SWARM_POLLING_TIMEOUT.ACTIVE);
     }
   }
@@ -207,7 +213,7 @@ export class SwarmPolling {
       const notPolled = _.difference(snodes, alreadyPolled);
       const newNeeded = COUNT - alreadyPolled.length;
       const newNodes = _.sampleSize(notPolled, newNeeded);
-      nodesToPoll = _.concat(nodesToPoll, newNodes);
+      nodesToPoll = [...nodesToPoll, ...newNodes];
     }
 
     const results = await Promise.all(
