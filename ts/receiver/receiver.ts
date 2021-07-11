@@ -75,6 +75,9 @@ class EnvelopeQueue {
     this.pending = promise;
 
     this.pending.then(this.cleanup.bind(this, promise), this.cleanup.bind(this, promise));
+
+    console.count('adding envelope count');
+    console.log(`queue count is: ${this.count}`);
   }
 
   private cleanup(promise: Promise<any>) {
@@ -92,6 +95,8 @@ const envelopeQueue = new EnvelopeQueue();
 function queueEnvelope(envelope: EnvelopePlus) {
   const id = getEnvelopeId(envelope);
   window?.log?.info('queueing envelope', id);
+
+  console.count('queueing envelope count');
 
   const task = handleEnvelope.bind(null, envelope);
   const taskWithTimeout = createTaskWithTimeout(task, `queueEnvelope ${id}`);

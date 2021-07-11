@@ -36,6 +36,7 @@ export const createTaskWithTimeout = (task: any, id: string, givenTimeout?: numb
 
       const success = (result: any) => {
         clearTimer();
+        console.count('success count');
         complete = true;
         resolve(result);
         return;

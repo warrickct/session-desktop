@@ -55,11 +55,14 @@ export class SwarmPolling {
   private readonly lastHashes: { [key: string]: PubkeyToHash };
   private groupPollsSinceActive: { [key: string]: number };
 
+  private count: number;
+
   constructor() {
     this.groupPolling = [];
     this.lastHashes = {};
     this.groupPollsSinceActive = {};
-
+    
+    this.count = 0;
   }
 
   public async start(waitForFirstPoll = false): Promise<void> {
@@ -242,6 +245,8 @@ export class SwarmPolling {
     }
 
     const newMessages = await this.handleSeenMessages(messages);
+
+   this.count += newMessages.length; 
 
     newMessages.forEach((m: Message) => {
       const options = isGroup ? { conversationId: pkStr } : {};
