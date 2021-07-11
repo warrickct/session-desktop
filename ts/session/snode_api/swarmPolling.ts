@@ -205,9 +205,12 @@ export class SwarmPolling {
     // If we need more nodes, select randomly from the remaining nodes:
 
     // Use 1 node for now:
-    const COUNT = 1;
+    // const COUNT = 1;
+    // const COUNT = snodes.length;
+    const COUNT = this.groupPollsSinceActive ? snodes.length : this.groupPollsSinceActive[pubkey.key] ? 3 : 1;
 
-    let nodesToPoll = _.sampleSize(alreadyPolled, COUNT);
+    // let nodesToPoll = _.sampleSize(alreadyPolled, COUNT);
+    let nodesToPoll = _.sampleSize(snodes, COUNT);
 
     if (nodesToPoll.length < COUNT) {
       const notPolled = _.difference(snodes, alreadyPolled);
