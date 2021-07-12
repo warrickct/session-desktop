@@ -858,6 +858,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
   public async commit() {
     // write to DB
+    console.count('commit count');
     await updateConversation(this.attributes);
     window.inboxStore?.dispatch(
       conversationActions.conversationChanged(this.id, {
