@@ -446,19 +446,18 @@ export async function handleMessageJob(
         );
         return;
       }
+      console.time('handleExpirationTimer');
       await handleExpirationTimerUpdate(conversation, message, source, expireTimer);
+      console.timeEnd('handleExpirationTimer');
     } else {
       await handleRegularMessage(conversation, message, initialMessage, source, ourNumber);
     }
 
-    console.time('xxx');
-
     messagesToCommit.push(message.attributes);
 
-    console.time('commit batch');
     if (messagesToCommit.length > 100) {
+      console.time('commit batch');
       message.commitBatch(messagesToCommit);
-
       // batch: set ids
       for (let index = 0; index < messagesToCommit.length; index++) {
         const { id } = messagesToCommit[index];
@@ -479,19 +478,16 @@ export async function handleMessageJob(
       conversation.set({ unreadCount });
       // this is a throttled call and will only run once every 1 sec
 
-      console.time('ccc');
       conversation.updateLastMessage();
-      console.timeEnd('ccc');
       console.time('ccc1');
       await conversation.commit();
       console.timeEnd('ccc1');
 
-      console.timeEnd('xxx');
       console.groupEnd();
 
       messagesToCommit = [];
+      console.timeEnd('commit batch');
     }
-    console.timeEnd('commit batch');
 
     if (false) {
 
