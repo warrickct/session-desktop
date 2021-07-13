@@ -196,7 +196,7 @@ function handleLinkPreviews(messageBody: string, messagePreview: any, message: M
   if (preview.length < incomingPreview.length) {
     window?.log?.info(
       `${message.idForLogging()}: Eliminated ${preview.length -
-        incomingPreview.length} previews with invalid urls'`
+      incomingPreview.length} previews with invalid urls'`
     );
   }
 
@@ -269,6 +269,14 @@ function handleSyncedReceipts(message: MessageModel, conversation: ConversationM
   message.set({ recipients });
 }
 
+/**
+ * Sets attributes for the message that is being added.
+ * @param conversation Conversation of the message
+ * @param message Message data
+ * @param initialMessage Initial message
+ * @param source Source
+ * @param ourNumber Our pubkey
+ */
 async function handleRegularMessage(
   conversation: ConversationModel,
   message: MessageModel,
@@ -400,6 +408,18 @@ async function handleExpirationTimerUpdate(
   await conversation.updateExpirationTimer(expireTimer, source, message.get('received_at'));
 }
 
+let messagesToCommit: any[] = [];
+
+/**
+ * Sets up attributes for the message and commits the message. Also adds the message to the conversation in redux.
+ * @param message 
+ * @param conversation 
+ * @param initialMessage 
+ * @param ourNumber 
+ * @param confirm 
+ * @param source 
+ * @returns 
+ */
 export async function handleMessageJob(
   message: MessageModel,
   conversation: ConversationModel,
@@ -431,31 +451,80 @@ export async function handleMessageJob(
       await handleRegularMessage(conversation, message, initialMessage, source, ourNumber);
     }
 
-    const id = await message.commit();
+    console.time('xxx');
 
-    message.set({ id });
-    // this updates the redux store.
-    // if the convo on which this message should become visible,
-    // it will be shown to the user, and might as well be read right away
-    window.inboxStore?.dispatch(
-      conversationActions.messageAdded({
-        conversationKey: conversation.id,
-        messageModel: message,
-      })
-    );
-    getMessageController().register(message.id, message);
+    messagesToCommit.push(message.attributes);
 
-    // Note that this can save the message again, if jobs were queued. We need to
-    //   call it after we have an id for this message, because the jobs refer back
-    //   to their source message.
+    console.time('commit batch');
+    if (messagesToCommit.length > 100) {
+      message.commitBatch(messagesToCommit);
 
-    void queueAttachmentDownloads(message, conversation);
+      // batch: set ids
+      for (let index = 0; index < messagesToCommit.length; index++) {
+        const { id } = messagesToCommit[index];
+        message.set({ id })
 
-    const unreadCount = await conversation.getUnreadCount();
-    conversation.set({ unreadCount });
-    // this is a throttled call and will only run once every 1 sec
-    conversation.updateLastMessage();
-    await conversation.commit();
+        window.inboxStore?.dispatch(
+          conversationActions.messageAdded({
+            conversationKey: conversation.id,
+            messageModel: message,
+          })
+        );
+
+        getMessageController().register(message.id, message);
+        void queueAttachmentDownloads(message, conversation);
+      }
+
+      const unreadCount = await conversation.getUnreadCount();
+      conversation.set({ unreadCount });
+      // this is a throttled call and will only run once every 1 sec
+
+      console.time('ccc');
+      conversation.updateLastMessage();
+      console.timeEnd('ccc');
+      console.time('ccc1');
+      await conversation.commit();
+      console.timeEnd('ccc1');
+
+      console.timeEnd('xxx');
+      console.groupEnd();
+
+      messagesToCommit = [];
+    }
+    console.timeEnd('commit batch');
+
+    if (false) {
+
+      const id = await message.commit();
+
+      message.set({ id });
+
+
+      // this updates the redux store.
+      // if the convo on which this message should become visible,
+      // it will be shown to the user, and might as well be read right away
+      window.inboxStore?.dispatch(
+        conversationActions.messageAdded({
+          conversationKey: conversation.id,
+          messageModel: message,
+        })
+      );
+
+      console.group('handleDataMessageTimers');
+      console.time('aaa');
+
+      getMessageController().register(message.id, message);
+      console.timeEnd('aaa');
+
+      // Note that this can save the message again, if jobs were queued. We need to
+      //   call it after we have an id for this message, because the jobs refer back
+      //   to their source message.
+
+      console.time('bbb');
+      void queueAttachmentDownloads(message, conversation);
+
+    } // BATCH END
+
 
     try {
       // We go to the database here because, between the message save above and

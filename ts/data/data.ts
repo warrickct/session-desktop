@@ -627,8 +627,11 @@ export async function updateLastHash(data: {
 }
 
 export async function saveMessage(data: MessageAttributes): Promise<string> {
+  let start = Date.now();
   const id = await channels.saveMessage(_cleanData(data));
   window.Whisper.ExpiringMessagesListener.update();
+
+  console.log('Save message: ', Date.now() - start);
   return id;
 }
 

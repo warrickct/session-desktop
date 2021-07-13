@@ -1546,7 +1546,7 @@ async function updateConversation(data) {
     members = $members,
     name = $name,
     profileName = $profileName
-  WHERE id = $id;`,
+    WHERE id = $id;`,
     {
       $id: id,
       $json: objectToJSON(data),

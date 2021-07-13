@@ -55,14 +55,10 @@ export class SwarmPolling {
   private readonly lastHashes: { [key: string]: PubkeyToHash };
   private groupPollsSinceActive: { [key: string]: number };
 
-  private count: number;
-
   constructor() {
     this.groupPolling = [];
     this.lastHashes = {};
     this.groupPollsSinceActive = {};
-    
-    this.count = 0;
   }
 
   public async start(waitForFirstPoll = false): Promise<void> {
@@ -165,9 +161,9 @@ export class SwarmPolling {
     try {
       await Promise.all([directPromise, ...groupPromises]);
       const groupResults = await Promise.all(groupPromises);
-      for (let i = 0; i < groupResults.length; i++) { 
+      for (let i = 0; i < groupResults.length; i++) {
         const groupId = getLoggingId(this.groupPolling[i]);
-          window.log.info(`groupId: ${groupId}`)
+        window.log.info(`groupId: ${groupId}`)
         if (groupResults[i] === true) {
           window.log.info(`group received messages, resetting count to 0`)
           this.groupPollsSinceActive[groupId] = 0;
@@ -209,13 +205,12 @@ export class SwarmPolling {
 
     // Use 1 node for now:
 
-    const COUNT = 1;
-
+    // const COUNT = 1;
     // const COUNT = snodes.length;
-    // const COUNT = this.groupPollsSinceActive ? snodes.length : this.groupPollsSinceActive[pubkey.key] ? 3 : 1;
+    const COUNT = this.groupPollsSinceActive ? snodes.length : this.groupPollsSinceActive[pubkey.key] ? 3 : 1;
 
-    let nodesToPoll = _.sampleSize(alreadyPolled, COUNT);
-    // let nodesToPoll = _.sampleSize(snodes, COUNT);
+    // let nodesToPoll = _.sampleSize(alreadyPolled, COUNT);
+    let nodesToPoll = _.sampleSize(snodes, COUNT);
 
     if (nodesToPoll.length < COUNT) {
       const notPolled = _.difference(snodes, alreadyPolled);
@@ -248,7 +243,6 @@ export class SwarmPolling {
 
     const newMessages = await this.handleSeenMessages(messages);
 
-   this.count += newMessages.length; 
 
     newMessages.forEach((m: Message) => {
       const options = isGroup ? { conversationId: pkStr } : {};
