@@ -282,7 +282,6 @@ export async function handleDataMessageBatch(
         dataMessage.closedGroupControlMessage as SignalService.DataMessage.ClosedGroupControlMessage
       );
       continue;
-      // return;
     }
 
     const message = await processDecrypted(envelope, dataMessage);
@@ -296,8 +295,8 @@ export async function handleDataMessageBatch(
     if (isSyncMessage && !isMe) {
       window?.log?.warn('Got a sync message from someone else than me. Dropping it.');
       removeFromCache(envelope);
+      await removeFromCache(envelope);
       continue;
-      // return removeFromCache(envelope);
     } else if (isSyncMessage && dataMessage.syncTarget) {
       // override the envelope source
       envelope.source = dataMessage.syncTarget;
@@ -315,8 +314,8 @@ export async function handleDataMessageBatch(
     }
     if (isMessageEmpty(message)) {
       window?.log?.warn(`Message ${getEnvelopeId(envelope)} ignored; it was empty`);
+      await removeFromCache(envelope);
       continue;
-      // return removeFromCache(envelope);
     }
 
     const ev: any = {};
@@ -346,7 +345,6 @@ export async function handleDataMessageBatch(
       message,
     };
 
-    // await handleMessageEvent(ev); // dataMessage
     eventBatch.push(ev);
   }
 
