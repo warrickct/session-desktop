@@ -285,9 +285,13 @@ export class SwarmPolling {
     // });
 
     console.count(`@@ poll node once for key. newMessages length: ${newMessages.length}`);
-    if (newMessages.length > 20) {
+    if (newMessages.length > 10) {
       console.count(`@@ new messages calling process message batch: ${newMessages.length}`)
       processMessages(newMessages, options);
+    } else {
+      newMessages.forEach((m: Message) => {
+        processMessage(m.data, options);
+      });
     }
 
     return newMessages.length > 0;

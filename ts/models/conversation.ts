@@ -858,18 +858,13 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
   public async commit() {
     // write to DB
-    console.log({conversationAttriutes: this.attributes});
-    console.time('111');
     await updateConversation(this.attributes);
-    console.timeEnd('111');
-    console.time('222');
     window.inboxStore?.dispatch(
       conversationActions.conversationChanged(this.id, {
         ...this.getProps(),
         isSelected: false,
       })
     );
-    console.timeEnd('222');
   }
 
   public async addSingleMessage(messageAttributes: MessageAttributesOptionals, setToExpire = true) {

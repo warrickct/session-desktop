@@ -49,14 +49,10 @@ interface ReqOptions {
 const incomingMessagePromises: Array<Promise<any>> = [];
 
 const handleEnvelopeBatch = async (envelopes: Array<EnvelopePlus>) => {
-
-  console.count(`@@ handleEnvelopeBatch length: ${envelopes.length} count: `)
-
   const contentMessageBatch = envelopes.filter(env => {
     return env.content && env.content.length > 0;
   })
 
-  debugger;
   if (contentMessageBatch.length > 0) {
     return handleContentMessageBatch(contentMessageBatch);
   }
@@ -91,9 +87,6 @@ class EnvelopeQueue {
     this.pending = promise;
 
     this.pending.then(this.cleanup.bind(this, promise), this.cleanup.bind(this, promise));
-
-    console.count('adding envelope count');
-    console.log(`queue count is: ${this.count}`);
   }
 
   private cleanup(promise: Promise<any>) {
@@ -129,16 +122,12 @@ function queueEnvelope(envelope: EnvelopePlus) {
 
 
 function queueEnvelopeBatch(envelopes: Array<EnvelopePlus>) {
-  console.count(`@@ queueEnvelopeBatch length: ${envelopes.length} count: `);
-
   // just get last id for now.
   let id: string = '';
   if (envelopes.length > 0) {
     id = getEnvelopeId(envelopes[0]);
   }
   window?.log?.info('queueing envelope', id);
-
-  console.count('queueing envelope count');
 
   const task = handleEnvelopeBatch.bind(null, envelopes);
   const taskWithTimeout = createTaskWithTimeout(task, `queueEnvelope ${id}`);
@@ -162,8 +151,6 @@ async function handleBatchRequestDetails(
   options: ReqOptions,
   lastPromise: Promise<any>
 ): Promise<void> {
-
-  console.count(`@@ handleBatchRequestDetails length: ${plaintexts.length} count: `)
 
   const processEnvelope = (plaintext: Uint8Array) => {
     const envelope: any = SignalService.Envelope.decode(plaintext);
@@ -278,8 +265,6 @@ async function handleRequestDetail(
 export function handleBatchRequest(bodies: Array<Uint8Array>, options: ReqOptions): void {
   // tslint:disable-next-line no-promise-as-boolean
   const lastPromise = _.last(incomingMessagePromises) || Promise.resolve();
-
-  console.count(`@@ handleBatchRequest ${bodies.length}`)
 
   const promise = handleBatchRequestDetails(bodies, options, lastPromise).catch(e => {
     window?.log?.error('Error handling incoming message:', e && e.stack ? e.stack : e);

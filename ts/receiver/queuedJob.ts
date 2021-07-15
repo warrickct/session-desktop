@@ -600,8 +600,6 @@ export async function handleMessageBatchJob(
   //   `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
   // );
 
-  debugger;
-
   const msgsToCommit: Array<{ conversation: ConversationModel, message: MessageModel, attributes: MessageAttributes }> = [];
 
   try {
@@ -669,6 +667,7 @@ export async function handleMessageBatchJob(
 
     if (msgsToCommit.length > 0) {
 
+      // assumes each poll only returns messages relating to one group at a time.
       msgsToCommit[0].message.commitBatch(msgsToCommit.map(m => m.attributes));
 
       msgsToCommit.forEach(async (msgToCommit) => {
@@ -689,23 +688,20 @@ export async function handleMessageBatchJob(
           })
         );
 
-        getMessageController().register(message.id, message);
-        void queueAttachmentDownloads(message, conversation);
-
-        const unreadCount = await conversation.getUnreadCount();
-        conversation.set({ unreadCount });
-        // this is a throttled call and will only run once every 1 sec
-
-        conversation.updateLastMessage();
-        console.time('ccc1');
-        await conversation.commit();
-        console.timeEnd('ccc1');
-
-        console.groupEnd();
       });
 
-      // messagesToCommit = [];
-      console.timeEnd('commit batch');
+      // test: assuming the first message of a poll always the same conversation
+      const { message, conversation } = msgsToCommit[0];
+
+      getMessageController().register(message.id, message);
+      void queueAttachmentDownloads(message, conversation);
+
+      const unreadCount = await conversation.getUnreadCount();
+      conversation.set({ unreadCount });
+      // this is a throttled call and will only run once every 0 sec
+
+      conversation.updateLastMessage();
+      await conversation.commit();
     }
 
     for (let index = 0; index < messageJobs.length; index++) {
