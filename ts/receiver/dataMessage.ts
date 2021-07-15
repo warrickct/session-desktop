@@ -741,7 +741,6 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
 // tslint:disable:cyclomatic-complexity max-func-body-length */
 export async function handleMessageBatchEvent(events: Array<MessageEvent>): Promise<void> {
 
-
   console.count(`handleMessageBatchEvent events length: ${events.length} count: `);
 
   const handleMessageBatch: MessageJobType[] = [];
@@ -758,7 +757,6 @@ export async function handleMessageBatchEvent(events: Array<MessageEvent>): Prom
       window?.log?.warn('Invalid data passed to handleMessageEvent.', event);
       confirm();
       continue;
-      // return;
     }
 
     const { message: initialMessage, destination } = data;
@@ -774,7 +772,6 @@ export async function handleMessageBatchEvent(events: Array<MessageEvent>): Prom
       window?.log?.error('We cannot handle a message without a conversationId');
       confirm();
       continue;
-      // return;
     }
     if (initialMessage.profileKey?.length) {
       await handleProfileUpdate(initialMessage.profileKey, conversationId, type, isIncoming);
@@ -815,50 +812,20 @@ export async function handleMessageBatchEvent(events: Array<MessageEvent>): Prom
       window?.log?.warn('Skipping handleJob for unknown convo: ', conversationId);
       confirm();
       continue;
-      // return;
     }
 
-    // conversation.queueJob(async () => {
-    //   if (await isMessageDuplicate(data)) {
-    //     window?.log?.info('Received duplicate message. Dropping it.');
-    //     confirm();
-    //     return;
-    //   }
-    //   // await handleMessageJob(msg, conversation, message, ourNumber, confirm, source);
-
-    //   // handleMessageBatch.push({msg, conversation, message, ourNumber, confirm, source});
-    //   handleMessageBatch.push({ message, conversation, initialMessage: message, ourNumber, confirm, source });
-    // });
-
+    // filtering out duplicates from the batch
     if (await isMessageDuplicate(data)) {
       window?.log?.info('Received duplicate message. Dropping it.');
       confirm();
-      // return;
       continue;
     } else {
       handleMessageBatch.push({ message: message, conversation, initialMessage: initialMessage, ourNumber, confirm, source });
     }
   }
 
-
-
-  // because of the nature of the polling, we know all polls in a batch are from the same group (polled by group key)
-  // so just get the conversation of the first message and use that for calling the batch handler.
-
-
   if (convo) {
     convo.queueJob(async () => {
-      // if (await isMessageDuplicate(data)) {
-      //   window?.log?.info('Received duplicate message. Dropping it.');
-      //   confirm();
-      //   return;
-      // }
-
-
-      // await handleMessageJob(msg, conversation, message, ourNumber, confirm, source);
-      // handleMessageBatch.push({msg, conversation, message, ourNumber, confirm, source});
-
-
       await handleMessageBatchJob(handleMessageBatch);
     });
   }
