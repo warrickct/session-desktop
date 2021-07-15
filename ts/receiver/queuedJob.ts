@@ -410,8 +410,6 @@ async function handleExpirationTimerUpdate(
   await conversation.updateExpirationTimer(expireTimer, source, message.get('received_at'));
 }
 
-let messagesToCommit: any[] = [];
-
 /**
  * Sets up attributes for the message and commits the message. Also adds the message to the conversation in redux.
  * @param message 
@@ -429,8 +427,6 @@ export async function handleMessageJob(
   ourNumber: string,
   confirm: () => void,
   source: string
-
-
 ) {
   window?.log?.info(
     `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
@@ -457,73 +453,32 @@ export async function handleMessageJob(
       await handleRegularMessage(conversation, message, initialMessage, source, ourNumber);
     }
 
-    messagesToCommit.push(message.attributes);
+    const id = await message.commit();
 
-    if (messagesToCommit.length > 100) {
-      console.time('commit batch');
-      message.commitBatch(messagesToCommit);
-      // batch: set ids
-      for (let index = 0; index < messagesToCommit.length; index++) {
-        const { id } = messagesToCommit[index];
-        message.set({ id })
+    message.set({ id });
 
-        window.inboxStore?.dispatch(
-          conversationActions.messageAdded({
-            conversationKey: conversation.id,
-            messageModel: message,
-          })
-        );
+    // this updates the redux store.
+    // if the convo on which this message should become visible,
+    // it will be shown to the user, and might as well be read right away
+    window.inboxStore?.dispatch(
+      conversationActions.messageAdded({
+        conversationKey: conversation.id,
+        messageModel: message,
+      })
+    );
 
-        getMessageController().register(message.id, message);
-        void queueAttachmentDownloads(message, conversation);
-      }
+    console.group('handleDataMessageTimers');
+    console.time('aaa');
 
-      const unreadCount = await conversation.getUnreadCount();
-      conversation.set({ unreadCount });
-      // this is a throttled call and will only run once every 1 sec
+    getMessageController().register(message.id, message);
+    console.timeEnd('aaa');
 
-      conversation.updateLastMessage();
-      console.time('ccc1');
-      await conversation.commit();
-      console.timeEnd('ccc1');
+    // Note that this can save the message again, if jobs were queued. We need to
+    //   call it after we have an id for this message, because the jobs refer back
+    //   to their source message.
 
-      console.groupEnd();
-
-      messagesToCommit = [];
-      console.timeEnd('commit batch');
-    }
-
-    if (false) {
-
-      const id = await message.commit();
-
-      message.set({ id });
-
-
-      // this updates the redux store.
-      // if the convo on which this message should become visible,
-      // it will be shown to the user, and might as well be read right away
-      window.inboxStore?.dispatch(
-        conversationActions.messageAdded({
-          conversationKey: conversation.id,
-          messageModel: message,
-        })
-      );
-
-      console.group('handleDataMessageTimers');
-      console.time('aaa');
-
-      getMessageController().register(message.id, message);
-      console.timeEnd('aaa');
-
-      // Note that this can save the message again, if jobs were queued. We need to
-      //   call it after we have an id for this message, because the jobs refer back
-      //   to their source message.
-
-      console.time('bbb');
-      void queueAttachmentDownloads(message, conversation);
-
-    } // BATCH END
+    console.time('bbb');
+    void queueAttachmentDownloads(message, conversation);
 
 
     try {
@@ -574,28 +529,11 @@ export interface MessageJobType {
   source: string;
 }
 
-/**
- * Sets up attributes for the message and commits the message. Also adds the message to the conversation in redux.
- * @param message 
- * @param conversation 
- * @param initialMessage 
- * @param ourNumber 
- * @param confirm 
- * @param source 
- * @returns 
- */
 export async function handleMessageBatchJob(
-  // message: MessageModel,
-  // conversation: ConversationModel,
-  // initialMessage: any,
-  // ourNumber: string,
-  // confirm: () => void,
-  // source: string
   messageJobs: Array<MessageJobType>
 
 ) {
   console.count(`handleMessageBatchJob messageJobs length: ${messageJobs.length} count: `);
-
   // window?.log?.info(
   //   `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
   // );
@@ -626,41 +564,7 @@ export async function handleMessageBatchJob(
       } else {
         await handleRegularMessage(conversation, message, initialMessage, source, ourNumber);
       }
-
       msgsToCommit.push({ message, conversation, attributes: message.attributes });
-
-
-      if (false) {
-
-        const id = await message.commit();
-
-        message.set({ id });
-
-
-        // this updates the redux store.
-        // if the convo on which this message should become visible,
-        // it will be shown to the user, and might as well be read right away
-        window.inboxStore?.dispatch(
-          conversationActions.messageAdded({
-            conversationKey: conversation.id,
-            messageModel: message,
-          })
-        );
-
-        console.group('handleDataMessageTimers');
-        console.time('aaa');
-
-        getMessageController().register(message.id, message);
-        console.timeEnd('aaa');
-
-        // Note that this can save the message again, if jobs were queued. We need to
-        //   call it after we have an id for this message, because the jobs refer back
-        //   to their source message.
-
-        console.time('bbb');
-        void queueAttachmentDownloads(message, conversation);
-
-      } // BATCH END
     }
 
     console.count('handle message batch job counter')
@@ -671,12 +575,7 @@ export async function handleMessageBatchJob(
       msgsToCommit[0].message.commitBatch(msgsToCommit.map(m => m.attributes));
 
       msgsToCommit.forEach(async (msgToCommit) => {
-
         const { message, conversation } = msgToCommit;
-
-        // console.time('commit batch');
-        // message.commitBatch(msg);
-
         // batch: set ids
         const { id } = message;
         message.set({ id })
@@ -687,7 +586,6 @@ export async function handleMessageBatchJob(
             messageModel: message,
           })
         );
-
       });
 
       // test: assuming the first message of a poll always the same conversation
