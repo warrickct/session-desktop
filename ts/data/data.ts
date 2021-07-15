@@ -628,15 +628,16 @@ export async function updateLastHash(data: {
 }
 
 export async function saveMessage(data: MessageAttributes): Promise<string> {
-  let start = Date.now();
   const id = await channels.saveMessage(_cleanData(data));
   window.Whisper.ExpiringMessagesListener.update();
-
-  console.log('Save message: ', Date.now() - start);
   return id;
 }
 
 export async function saveMessages(arrayOfMessages: Array<MessageAttributes>): Promise<void> {
+  await channels.saveMessages(_cleanData(arrayOfMessages));
+}
+
+export async function saveMessagesViaWorker(arrayOfMessages: Array<MessageAttributes>): Promise<void> {
   await channels.saveMessages(_cleanData(arrayOfMessages));
 }
 
