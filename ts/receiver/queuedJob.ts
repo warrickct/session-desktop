@@ -467,17 +467,11 @@ export async function handleMessageJob(
       })
     );
 
-    console.group('handleDataMessageTimers');
-    console.time('aaa');
-
     getMessageController().register(message.id, message);
-    console.timeEnd('aaa');
 
     // Note that this can save the message again, if jobs were queued. We need to
     //   call it after we have an id for this message, because the jobs refer back
     //   to their source message.
-
-    console.time('bbb');
     void queueAttachmentDownloads(message, conversation);
 
 

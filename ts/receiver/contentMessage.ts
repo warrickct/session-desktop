@@ -335,6 +335,7 @@ export async function innerHandleContentMessageBatch(
   console.count(`innerHandleContentMessageBatch envelopes length: ${envelopes.length} ${plaintexts.length} count: `);
 
   try {
+    const dataMessageEnvelopes: Array<EnvelopePlus> = [];
     const dataMessages: Array<SignalService.IDataMessage> = [];
 
     for (let index = 0; index < envelopes.length; index++) {
@@ -368,6 +369,7 @@ export async function innerHandleContentMessageBatch(
           }
           // dataMessages.push({ envelope, content: content.dataMessage })
           dataMessages.push(content.dataMessage)
+          dataMessageEnvelopes.push(envelope);
           // await handleDataMessage(envelope, content.dataMessage);
           continue;
         }
@@ -400,7 +402,7 @@ export async function innerHandleContentMessageBatch(
       }
     }
 
-    handleDataMessageBatch(envelopes, dataMessages);
+    handleDataMessageBatch(dataMessageEnvelopes, dataMessages);
   } catch (err) {
     window?.log?.info(`Error handling message batch of length ${envelopes.length}`)
   }
