@@ -13,6 +13,8 @@ import { getMessageById, getMessagesBySentAt } from '../../ts/data/data';
 import { actions as conversationActions } from '../state/ducks/conversations';
 import { updateProfileOneAtATime } from './dataMessage';
 import Long from 'long';
+import Backbone from 'backbone';
+import { MessageAttributes } from '../models/messageType';
 
 async function handleGroups(
   conversation: ConversationModel,
@@ -427,6 +429,8 @@ export async function handleMessageJob(
   ourNumber: string,
   confirm: () => void,
   source: string
+
+
 ) {
   window?.log?.info(
     `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
@@ -559,4 +563,193 @@ export async function handleMessageJob(
 
     throw error;
   }
+}
+
+export interface MessageJobType {
+  message: MessageModel;
+  conversation: ConversationModel;
+  initialMessage?: any;
+  ourNumber: string;
+  confirm: () => void;
+  source: string;
+}
+
+/**
+ * Sets up attributes for the message and commits the message. Also adds the message to the conversation in redux.
+ * @param message 
+ * @param conversation 
+ * @param initialMessage 
+ * @param ourNumber 
+ * @param confirm 
+ * @param source 
+ * @returns 
+ */
+export async function handleMessageBatchJob(
+  // message: MessageModel,
+  // conversation: ConversationModel,
+  // initialMessage: any,
+  // ourNumber: string,
+  // confirm: () => void,
+  // source: string
+  messageJobs: Array<MessageJobType>
+
+) {
+  console.count(`handleMessageBatchJob messageJobs length: ${messageJobs.length} count: `);
+
+  // window?.log?.info(
+  //   `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
+  // );
+
+  debugger;
+
+  const msgsToCommit: Array<{ conversation: ConversationModel, message: MessageModel, attributes: MessageAttributes }> = [];
+
+  try {
+    for (let index = 0; index < messageJobs.length; index++) {
+      const messageJob = messageJobs[index];
+      const { message, conversation, initialMessage, ourNumber, confirm, source } = messageJob;
+
+      message.set({ flags: initialMessage.flags });
+      if (message.isExpirationTimerUpdate()) {
+        const { expireTimer } = initialMessage;
+        const oldValue = conversation.get('expireTimer');
+        if (expireTimer === oldValue) {
+          if (confirm) {
+            confirm();
+          }
+          window?.log?.info(
+            'Dropping ExpireTimerUpdate message as we already have the same one set.'
+          );
+          return;
+        }
+        console.time('handleExpirationTimer');
+        await handleExpirationTimerUpdate(conversation, message, source, expireTimer);
+        console.timeEnd('handleExpirationTimer');
+      } else {
+        await handleRegularMessage(conversation, message, initialMessage, source, ourNumber);
+      }
+
+      msgsToCommit.push({ message, conversation, attributes: message.attributes });
+
+
+      if (false) {
+
+        const id = await message.commit();
+
+        message.set({ id });
+
+
+        // this updates the redux store.
+        // if the convo on which this message should become visible,
+        // it will be shown to the user, and might as well be read right away
+        window.inboxStore?.dispatch(
+          conversationActions.messageAdded({
+            conversationKey: conversation.id,
+            messageModel: message,
+          })
+        );
+
+        console.group('handleDataMessageTimers');
+        console.time('aaa');
+
+        getMessageController().register(message.id, message);
+        console.timeEnd('aaa');
+
+        // Note that this can save the message again, if jobs were queued. We need to
+        //   call it after we have an id for this message, because the jobs refer back
+        //   to their source message.
+
+        console.time('bbb');
+        void queueAttachmentDownloads(message, conversation);
+
+      } // BATCH END
+    }
+
+    console.count('handle message batch job counter')
+
+    if (msgsToCommit.length > 0) {
+
+      msgsToCommit[0].message.commitBatch(msgsToCommit.map(m => m.attributes));
+
+      msgsToCommit.forEach(async (msgToCommit) => {
+
+        const { message, conversation } = msgToCommit;
+
+        // console.time('commit batch');
+        // message.commitBatch(msg);
+
+        // batch: set ids
+        const { id } = message;
+        message.set({ id })
+
+        window.inboxStore?.dispatch(
+          conversationActions.messageAdded({
+            conversationKey: conversation.id,
+            messageModel: message,
+          })
+        );
+
+        getMessageController().register(message.id, message);
+        void queueAttachmentDownloads(message, conversation);
+
+        const unreadCount = await conversation.getUnreadCount();
+        conversation.set({ unreadCount });
+        // this is a throttled call and will only run once every 1 sec
+
+        conversation.updateLastMessage();
+        console.time('ccc1');
+        await conversation.commit();
+        console.timeEnd('ccc1');
+
+        console.groupEnd();
+      });
+
+      // messagesToCommit = [];
+      console.timeEnd('commit batch');
+    }
+
+    for (let index = 0; index < messageJobs.length; index++) {
+      const messageJob = messageJobs[index];
+      const { message, conversation, confirm } = messageJob;
+      try {
+        // We go to the database here because, between the message save above and
+        // the previous line's trigger() call, we might have marked all messages
+        // unread in the database. This message might already be read!
+        const fetched = await getMessageById(message.get('id'));
+
+        const previousUnread = message.get('unread');
+
+        // Important to update message with latest read state from database
+        message.merge(fetched);
+
+        if (previousUnread !== message.get('unread')) {
+          window?.log?.warn(
+            'Caught race condition on new message read state! ' + 'Manually starting timers.'
+          );
+          // We call markRead() even though the message is already
+          // marked read because we need to start expiration
+          // timers, etc.
+          await message.markRead(Date.now());
+        }
+
+        if (message.get('unread')) {
+          await conversation.throttledNotify(message);
+        }
+
+        if (confirm) {
+          confirm();
+        }
+
+      } catch (error) {
+        window?.log?.warn('handleDataMessage: Message', message.idForLogging(), 'was deleted');
+      }
+    }
+
+
+  } catch (error) {
+    const errorForLog = error && error.stack ? error.stack : error;
+    // window?.log?.error('handleDataMessage', message.idForLogging(), 'error:', errorForLog);
+    throw error;
+  }
+
 }

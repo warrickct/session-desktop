@@ -42,6 +42,40 @@ export function processMessage(message: string, options: any = {}) {
   }
 }
 
+/**
+ * Converts a message into an array buffer
+ * @param message Message to be converted
+ * @returns Array buffer
+ */
+export const messageToWebsocketMessage = (message: string) => {
+  const dataPlaintext = new Uint8Array(StringUtils.encode(message, 'base64'));
+  const messageBuf = SignalService.WebSocketMessage.decode(dataPlaintext);
+  return messageBuf;
+}
+
+/**
+ * Converts an array of messages into an array of array buffers
+ * @param messages List of messages
+ * @returns List of array buffers
+ */
+export const messagesToArrayBuffers = (messages: Message[]): Array<Uint8Array> => {
+  const messageBodies: Array<Uint8Array> = [];
+  for (let index = 0; index < messages.length; index++) {
+    const message = messages[index];
+    const wMessage = messageToWebsocketMessage(message.data);
+    const body = wMessage.request?.body;
+    if (body) {
+      messageBodies.push(body);
+    }
+  }
+  return messageBodies;
+}
+
+export const processMessages = (messages: Array<Message>, options: any) => {
+  let messageBodies = messagesToArrayBuffers(messages);
+  Receiver.handleBatchRequest(messageBodies, options);
+}
+
 let instance: SwarmPolling | undefined;
 export const getSwarmPollingInstance = () => {
   if (!instance) {
@@ -244,10 +278,17 @@ export class SwarmPolling {
     const newMessages = await this.handleSeenMessages(messages);
 
 
-    newMessages.forEach((m: Message) => {
-      const options = isGroup ? { conversationId: pkStr } : {};
-      processMessage(m.data, options);
-    });
+    const options = isGroup ? { conversationId: pkStr } : {};
+
+    // newMessages.forEach((m: Message) => {
+    //   processMessage(m.data, options);
+    // });
+
+    console.count(`@@ poll node once for key. newMessages length: ${newMessages.length}`);
+    if (newMessages.length > 20) {
+      console.count(`@@ new messages calling process message batch: ${newMessages.length}`)
+      processMessages(newMessages, options);
+    }
 
     return newMessages.length > 0;
   }

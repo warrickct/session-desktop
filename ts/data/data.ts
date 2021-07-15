@@ -129,6 +129,7 @@ const channelsToMake = {
   getUnprocessedCount,
   getAllUnprocessed,
   getUnprocessedById,
+  saveUnprocessedBatch,
   saveUnprocessed,
   updateUnprocessedAttempts,
   updateUnprocessedWithData,
@@ -838,6 +839,13 @@ export type UnprocessedParameter = {
   senderIdentity?: string;
 };
 
+
+export async function saveUnprocessedBatch(data: Array<UnprocessedParameter>): Promise<string> {
+  const cleanedData = [...data.map(d => _cleanData(d))];
+  const id = await channels.saveUnprocessedBatch(cleanedData);
+  return id;
+}
+
 export async function saveUnprocessed(data: UnprocessedParameter): Promise<string> {
   const id = await channels.saveUnprocessed(_cleanData(data));
   return id;
@@ -850,7 +858,7 @@ export async function updateUnprocessedWithData(id: string, data: any): Promise<
   await channels.updateUnprocessedWithData(id, data);
 }
 
-export async function removeUnprocessed(id: string): Promise<void> {
+export async function removeUnprocessed(id: string | string[]): Promise<void> {
   await channels.removeUnprocessed(id);
 }
 
