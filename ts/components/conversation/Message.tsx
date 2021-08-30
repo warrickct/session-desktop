@@ -717,6 +717,7 @@ class MessageInner extends React.PureComponent<Props, State> {
             isPublic={this.props.isPublic}
             status={this.props.status}
             weAreAdmin={this.props.weAreAdmin}
+            serverId={this.props.serverId}
           />
         </div>
       </ReadableMessage>

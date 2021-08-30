@@ -32,6 +32,7 @@ export type PropsForMessageContextMenu = {
   isAdmin?: boolean;
   weAreAdmin?: boolean;
   contextMenuId: string;
+  serverId?: number;
 };
 
 export const MessageContextMenu = (props: PropsForMessageContextMenu) => {
@@ -146,6 +147,11 @@ export const MessageContextMenu = (props: PropsForMessageContextMenu) => {
     void deleteMessagesById([messageId], convoId, false);
   }, [convoId, messageId]);
 
+  const onUnsend = useCallback(() => {
+    void deleteMessagesById([messageId], convoId, false);
+    // void unsendMessage(messageId)
+  }, [messageId, convoId])
+
   return (
     <Menu
       id={contextMenuId}
@@ -157,6 +163,7 @@ export const MessageContextMenu = (props: PropsForMessageContextMenu) => {
         <Item onClick={saveAttachment}>{window.i18n('downloadAttachment')}</Item>
       ) : null}
 
+      <Item onClick={onUnsend}>Unsend message</Item>
       <Item onClick={copyText}>{window.i18n('copyMessage')}</Item>
       <Item onClick={onReply}>{window.i18n('replyToMessage')}</Item>
       <Item onClick={onShowDetail}>{window.i18n('moreInformation')}</Item>

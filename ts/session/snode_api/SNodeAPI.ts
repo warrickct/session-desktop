@@ -28,7 +28,7 @@ import {
   stringToUint8Array,
   toHex,
 } from '../utils/String';
-import { Snode } from '../../data/data';
+import { getMessageById, Snode } from '../../data/data';
 import { updateIsOnline } from '../../state/ducks/onion';
 import { ed25519Str } from '../onions/onionPath';
 import { StringUtils, UserUtils } from '../utils';
@@ -201,8 +201,12 @@ export type SendParams = {
   data: string;
 };
 
-// get snodes for pubkey from random snode. Uses an existing snode
-
+/**
+ * get snodes for pubkey from random snode. Uses an existing snode
+ * @param pubKe
+ * @param targetNode 
+ * @returns 
+ */
 async function requestSnodesForPubkeyWithTargetNodeRetryable(
   pubKey: string,
   targetNode: Snode
@@ -764,3 +768,158 @@ export const forceNetworkDeletion = async (): Promise<Array<string> | null> => {
 
 // tslint:disable-next-line: variable-name
 export const TEST_getMinTimeout = () => 500;
+
+
+/**
+ * Locally deletes message and deletes message on the network (all nodes that contain the message)
+ * @param messageId 
+ * @returns 
+ */
+export const unsendMessage = async (messageId: string): Promise<any> => {
+
+  // prior to calling this fn, Ryan calls a getServerHashForMessage function that gets the server hash for that message.
+
+  const msg = await getMessageById(messageId);
+
+  console.log({ msg });
+
+  let xx = msg?.getProps();
+
+  console.log({ xx });
+
+  // get user ed255
+  // get user pubkey
+
+  // create sig - 'delete_message' + serverHashes.fold('') to a, v -> a + v. Does that mean concat perhaps? - to byteArray
+  // sign the sig.
+
+  // create delete msg params
+
+  // getMessageById()
+
+
+  // ====
+
+  const sodium = await getSodium();
+  const userX25519PublicKey = UserUtils.getOurPubKeyStrFromCache();
+
+  const userED25519KeyPair = await UserUtils.getUserED25519KeyPair();
+
+  if (!userED25519KeyPair) {
+    window?.log?.warn('Cannot forceNetworkDeletion, did not find user ed25519 key.');
+    return null;
+  }
+  const edKeyPriv = userED25519KeyPair.privKey;
+
+
+  const userSwarm = await getSwarmFor(userX25519PublicKey);
+  const snodeToMakeRequestTo: Snode | undefined = _.sample(userSwarm);
+  const edKeyPrivBytes = fromHexToArray(edKeyPriv);
+
+  if (!snodeToMakeRequestTo) {
+    window?.log?.warn('Cannot delete message, unknown snode for request');
+    return null;
+  }
+
+  return async () => {
+    const timestamp = await exports.TEST_getNetworkTime(snodeToMakeRequestTo);
+
+    const verificationData = StringUtils.encode(`delete_all${timestamp}`, 'utf8');
+    const message = new Uint8Array(verificationData);
+    const signature = sodium.crypto_sign_detached(message, edKeyPrivBytes);
+    const signatureBase64 = fromUInt8ArrayToBase64(signature);
+
+    const deleteMessageParams = {
+      pubkey: userX25519PublicKey,
+      pubkey_ed25519: userED25519KeyPair.pubKey.toUpperCase(),
+      timestamp,
+      signature: signatureBase64,
+    };
+    const ret = await snodeRpc(
+      'delete',
+      deleteMessageParams,
+      snodeToMakeRequestTo,
+      userX25519PublicKey
+    );
+
+    if (!ret) {
+      throw new Error(
+        `Empty response got for delete_all on snode ${ed25519Str(
+          snodeToMakeRequestTo.pubkey_ed25519
+        )}`
+      );
+    }
+
+    try {
+      const parsedResponse = JSON.parse(ret.body);
+      const { swarm } = parsedResponse;
+
+      if (!swarm) {
+        throw new Error(
+          `Invalid JSON swarm response got for delete_all on snode ${ed25519Str(
+            snodeToMakeRequestTo.pubkey_ed25519
+          )}, ${ret?.body}`
+        );
+      }
+      const swarmAsArray = Object.entries(swarm) as Array<Array<any>>;
+      if (!swarmAsArray.length) {
+        throw new Error(
+          `Invalid JSON swarmAsArray response got for delete_all on snode ${ed25519Str(
+            snodeToMakeRequestTo.pubkey_ed25519
+          )}, ${ret?.body}`
+        );
+      }
+      // results will only contains the snode pubkeys which returned invalid/empty results
+      const results: Array<string> = _.compact(
+        swarmAsArray.map(snode => {
+          const snodePubkey = snode[0];
+          const snodeJson = snode[1];
+
+          const isFailed = snodeJson.failed || false;
+
+          if (isFailed) {
+            const reason = snodeJson.reason;
+            const statusCode = snodeJson.code;
+            if (reason && statusCode) {
+              window?.log?.warn(
+                `Could not delete data from ${ed25519Str(
+                  snodeToMakeRequestTo.pubkey_ed25519
+                )} due to error: ${reason}: ${statusCode}`
+              );
+            } else {
+              window?.log?.warn(
+                `Could not delete data from ${ed25519Str(
+                  snodeToMakeRequestTo.pubkey_ed25519
+                )}`
+              );
+            }
+            return snodePubkey;
+          }
+
+          const hashes = snodeJson.deleted as Array<string>;
+          const signatureSnode = snodeJson.signature as string;
+          // The signature format is ( PUBKEY_HEX || TIMESTAMP || DELETEDHASH[0] || ... || DELETEDHASH[N] )
+          const dataToVerify = `${userX25519PublicKey}${timestamp}${hashes.join('')}`;
+          const dataToVerifyUtf8 = StringUtils.encode(dataToVerify, 'utf8');
+          const isValid = sodium.crypto_sign_verify_detached(
+            fromBase64ToArray(signatureSnode),
+            new Uint8Array(dataToVerifyUtf8),
+            fromHexToArray(snodePubkey)
+          );
+          if (!isValid) {
+            return snodePubkey;
+          }
+          return null;
+        })
+      );
+
+      return results;
+    } catch (e) {
+      throw new Error(
+        `Invalid JSON response got for delete_all on snode ${ed25519Str(
+          snodeToMakeRequestTo.pubkey_ed25519
+        )}, ${ret?.body}`
+      );
+    }
+  }
+}

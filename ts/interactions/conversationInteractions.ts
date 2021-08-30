@@ -463,8 +463,12 @@ export async function deleteMessagesById(
       }
 
       const isAdmin = conversationModel.isAdmin(ourDevicePubkey);
-      const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
-
+      // const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
+      const isAllOurs = selectedMessages.every(message => {
+        ourDevicePubkey === message.getSource();
+        console.log({source: ourDevicePubkey});
+      });
+      
       if (!isAllOurs && !isAdmin) {
         ToastUtils.pushMessageDeleteForbidden();
 
