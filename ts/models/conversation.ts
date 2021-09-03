@@ -13,6 +13,7 @@ import { MessageModel } from './message';
 import { MessageAttributesOptionals, MessageModelType } from './messageType';
 import autoBind from 'auto-bind';
 import {
+  getMessageBySenderAndTimestamp,
   getMessagesByConversation,
   getUnreadByConversation,
   getUnreadCountByConversation,
@@ -711,47 +712,12 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
-
-  // public sendTypingMessage(isTyping: boolean) {
-  //   if (!this.isPrivate()) {
-  //     return;
-  //   }
-
-  //   const recipientId = this.id;
-
-  //   if (!recipientId) {
-  //     throw new Error('Need to provide either recipientId');
-  //   }
-
-  //   const primaryDevicePubkey = window.storage.get('primaryDevicePubKey');
-  //   if (recipientId && primaryDevicePubkey === recipientId) {
-  //     // note to self
-  //     return;
-  //   }
-
-  //   const typingParams = {
-  //     timestamp: Date.now(),
-  //     isTyping,
-  //     typingTimestamp: Date.now(),
-  //   };
-  //   const typingMessage = new TypingMessage(typingParams);
-
-  //   // send the message to a single recipient if this is a session chat
-  //   const device = new PubKey(recipientId);
-  //   getMessageQueue()
-  //     .sendToPubKey(device, typingMessage)
-  //     .catch(window?.log?.error);
-  // }
-
   /**
    * Creates an unsend request using protobuf and adds to messageQueue.
    * @param message Message to unsend
    * @returns 
    */
-  public unsendMessage(message: MessageModel) {
-    // TODO: remove logging
-    window.log.info('Sending unsend request');
-    console.log({ destination: this.id });
+  public async unsendMessage(message: MessageModel) {
 
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
@@ -794,6 +760,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
 
     console.log({unsendParams});
+
+    let msgFromDb = await getMessageBySenderAndTimestamp({source: author, timestamp});
+    console.log({msgFromDb});
 
     const unsendMessage = new UnsendMessage(unsendParams);
     //#endregion

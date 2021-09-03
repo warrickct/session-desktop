@@ -184,7 +184,7 @@ export type PropsForMessageWithoutConvoProps = {
   expirationTimestamp: number | null;
   isExpired: boolean;
   isTrustedForAttachmentDownload: boolean;
-  messageHash: string | null;
+  messageHash: string | null
 };
 
 export type PropsForMessageWithConvoProps = PropsForMessageWithoutConvoProps & {

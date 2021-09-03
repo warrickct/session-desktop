@@ -113,6 +113,7 @@ const channelsToMake = {
   getMessageBySender,
   getMessageBySenderAndServerId,
   getMessageBySenderAndServerTimestamp,
+  getMessageBySenderAndTimestamp,
   getMessageIdsFromServerIds,
   getMessageById,
   getMessagesBySentAt,
@@ -732,7 +733,7 @@ export async function getMessageBySenderAndServerTimestamp({
 /**
  * 
  * @param source senders id
- * @param timestamp the timestamp of the message - not to be confused with the serverTimestamp
+ * @param timestamp the timestamp of the message - not to be confused with the serverTimestamp. This is equivalent to sent_at
  * @returns 
  */
 export async function getMessageBySenderAndTimestamp({

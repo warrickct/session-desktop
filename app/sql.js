@@ -2075,7 +2075,7 @@ function getMessageBySenderAndTimestamp({ source, timestamp }) {
     .prepare(
       `SELECT json FROM ${MESSAGES_TABLE} WHERE
       source = $source AND
-      timestamp = $timestamp;`
+      sent_at = $timestamp;`
     )
     .all({
       source,

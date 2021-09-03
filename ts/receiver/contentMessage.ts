@@ -493,12 +493,8 @@ async function handleTypingMessage(
  * @param unsendMessage data required to delete message
  */
 async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: SignalService.Unsend) {
-  // const { timestamp, author } = unsendMessage; // TODO: implement I assume
   const { source } = envelope;
   const { author, timestamp } = unsendMessage;
-
-  console.log({ unsendMessage });
-
   await removeFromCache(envelope);
 
   //#region early exit conditions
@@ -510,44 +506,39 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
     window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message')
   }
 
+  const conversation = getConversationController().get(source);
+  if (!conversation) {
+    return;
+  }
   //#endregion
 
-  const conversation = getConversationController().get(source);
-  if (conversation) {
-    // TODO: don't know if I actually need the conversation controller.
+  // TODO: don't know if I actually need the conversation controller.
 
-    // 1. lookup the message using the timestamp and author (and maybe the convo?)
-    // 1.1 obtain the hash from the message 
-    // 2. delete from swarm using the SnodeRPC delete message request. (ensure it works completely)
+  // 1. lookup the message using the timestamp and author (and maybe the convo?)
+  // 1.1 obtain the hash from the message 
+  // 2. delete from swarm using the SnodeRPC delete message request. (ensure it works completely)
 
-    // 3. delete the message from user database i.e. delete locally
+  // 3. delete the message from user database i.e. delete locally
 
-    /**
-     * Pseudocode
-     * const hashToDelete = messageDatabaseLookup(author, timestamp).hash;
-     * 
-     * SnodeAPI.deleteMessage(hashToDelete);
-     * 
-     * deleteMessageFromDb() - maybe this is given to deleteMessage as a success callback? 
-     * 
-     */
+  /**
+   * Pseudocode
+   * const hashToDelete = messageDatabaseLookup(author, timestamp).hash;
+   * 
+   * SnodeAPI.deleteMessage(hashToDelete);
+   * 
+   * deleteMessageFromDb() - maybe this is given to deleteMessage as a success callback? 
+   * 
+   */
 
-    // console.log({toNumberTs:Lodash.toNumber(timestamp) });
+  const messageToDelete = await getMessageBySenderAndTimestamp({
+    source: author,
+    timestamp: Lodash.toNumber(timestamp)
+  });
 
-    const messageToDelete = await getMessageBySenderAndTimestamp({
-      source: author,
-      timestamp: Lodash.toNumber(timestamp) // TODO: this might be wrong conversion.
-    });
+  const messageHash = messageToDelete?.getPropsForMessage().messageHash;
 
-    console.log({messageToDelete});
-    const messageHash = messageToDelete?.getPropsForMessage().messageHash;
-    console.log('toDeleteHash: ', messageHash)
-
-    if (messageHash) {
-      debugger;
-      deleteMessageByHash([messageHash]) // TODO: refactor deletion into single fn call and batch call.
-    }
-
+  if (messageHash) {
+    deleteMessageByHash([messageHash]) // TODO: refactor deletion into single fn call and batch call.
   }
 }
 

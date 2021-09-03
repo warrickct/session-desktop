@@ -456,30 +456,6 @@ export async function deleteMessagesById(
   const doDelete = async () => {
     let toDeleteLocallyIds: Array<string>;
 
-    // unsend logic
-    if (true) {
-      const msgHashes: Array<string> = [];
-
-      for (let index = 0; index < selectedMessages.length; index++) {
-        const msgHash = selectedMessages[index].getMessageModelProps().propsForMessage.messageHash;
-        if (msgHash !== null) {
-          msgHashes.push(msgHash);
-        }
-      }
-
-      // TODO: test - sending unsend request to session recipient.
-
-      selectedMessages.map(selectedMessage => {
-        conversationModel.unsendMessage(selectedMessage);
-      })
-
-      console.log({ msgHashes });
-      if (msgHashes.length > 0) {
-        await deleteMessageByHash(msgHashes);
-      }
-    }
-
-
     if (isServerDeletable) {
       // Get our Moderator status
       const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
@@ -507,6 +483,29 @@ export async function deleteMessagesById(
         return;
       }
     } else {
+      if (true) {
+        const msgHashes: Array<string> = [];
+
+        for (let index = 0; index < selectedMessages.length; index++) {
+          const msgHash = selectedMessages[index].getMessageModelProps().propsForMessage.messageHash;
+          if (msgHash !== null) {
+            msgHashes.push(msgHash);
+          }
+        }
+
+        // TODO: test - sending unsend request to session recipient.
+
+        selectedMessages.map(async (selectedMessage) => {
+          await conversationModel.unsendMessage(selectedMessage);
+        })
+
+        console.log({ msgHashes });
+        if (msgHashes.length > 0) {
+          await deleteMessageByHash(msgHashes);
+        }
+      }
+
+
       toDeleteLocallyIds = selectedMessages.map(m => m.id as string);
     }
 
