@@ -264,7 +264,8 @@ function isBodyEmpty(body: string) {
  */
 export async function handleDataMessage(
   envelope: EnvelopePlus,
-  dataMessage: SignalService.IDataMessage
+  dataMessage: SignalService.IDataMessage,
+  messageHash?: string
 ): Promise<void> {
   // we handle group updates from our other devices in handleClosedGroupControlMessage()
   if (dataMessage.closedGroupControlMessage) {
@@ -331,6 +332,7 @@ export async function handleDataMessage(
     timestamp: _.toNumber(envelope.timestamp),
     receivedAt: envelope.receivedAt,
     message,
+    messageHash
   };
 
   await handleMessageEvent(ev); // dataMessage
@@ -456,6 +458,7 @@ export interface MessageCreationData {
   // Needed for synced outgoing messages
   expirationStartTimestamp: any; // ???
   destination: string;
+  messageHash?: string;
 }
 
 export function initIncomingMessage(data: MessageCreationData): MessageModel {
@@ -468,6 +471,7 @@ export function initIncomingMessage(data: MessageCreationData): MessageModel {
     serverId,
     message,
     serverTimestamp,
+    messageHash
   } = data;
 
   const messageGroupId = message?.group?.id;
@@ -489,6 +493,7 @@ export function initIncomingMessage(data: MessageCreationData): MessageModel {
     direction: 'incoming', // +
     unread: 1, // +
     isPublic, // +
+    messageHash: messageHash || null
   };
 
   return new MessageModel(messageData);
@@ -507,6 +512,7 @@ function createSentMessage(data: MessageCreationData): MessageModel {
     expirationStartTimestamp,
     destination,
     message,
+    messageHash
   } = data;
 
   const sentSpecificFields = {
@@ -532,6 +538,7 @@ function createSentMessage(data: MessageCreationData): MessageModel {
     isPublic,
     conversationId: groupId ?? destination,
     type: 'outgoing' as MessageModelType,
+    messageHash,
     ...sentSpecificFields,
   };
 
@@ -564,7 +571,9 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
     return;
   }
 
-  const { message, destination } = data;
+  const { message, destination, messageHash } = data;
+
+  console.log({messageHashFromEvent: messageHash});
 
   let { source } = data;
 
@@ -619,11 +628,11 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
   }
 
   conversation.queueJob(async () => {
-    if (await isMessageDuplicate(data)) {
-      window?.log?.info('Received duplicate message. Dropping it.');
-      confirm();
-      return;
-    }
-    await handleMessageJob(msg, conversation, message, ourNumber, confirm, source);
+    // if (await isMessageDuplicate(data)) {
+    //   window?.log?.info('Received duplicate message. Dropping it.');
+    //   confirm();
+    //   return;
+    // }
+    await handleMessageJob(msg, conversation, message, ourNumber, confirm, source, messageHash);
   });
 }

@@ -526,6 +526,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       expirationTimestamp,
       isExpired: this.isExpired(),
       isTrustedForAttachmentDownload,
+      messageHash: this.get('messageHash') || null
     };
 
     return props;
@@ -1017,6 +1018,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     perfStart(`messageCommit-${this.attributes.id}`);
+    console.log({saveMsgAttribs: this.attributes});
     const id = await saveMessage(this.attributes);
     this.dispatchMessageUpdate();
     perfEnd(`messageCommit-${this.attributes.id}`, 'messageCommit');

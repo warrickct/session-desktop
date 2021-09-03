@@ -690,6 +690,8 @@ export async function getMessageBySender({
   return new MessageModel(messages[0]);
 }
 
+
+
 export async function getMessageBySenderAndServerId({
   source,
   serverId,
@@ -718,6 +720,31 @@ export async function getMessageBySenderAndServerTimestamp({
   const messages = await channels.getMessageBySenderAndServerTimestamp({
     source,
     serverTimestamp,
+  });
+  if (!messages || !messages.length) {
+    return null;
+  }
+
+  return new MessageModel(messages[0]);
+}
+
+
+/**
+ * 
+ * @param source senders id
+ * @param timestamp the timestamp of the message - not to be confused with the serverTimestamp
+ * @returns 
+ */
+export async function getMessageBySenderAndTimestamp({
+  source,
+  timestamp,
+}: {
+  source: string;
+  timestamp: number;
+}): Promise<MessageModel | null> {
+  const messages = await channels.getMessageBySenderAndTimestamp({
+    source,
+    timestamp,
   });
   if (!messages || !messages.length) {
     return null;
@@ -834,6 +861,7 @@ export type UnprocessedParameter = {
   timestamp: number;
   attempts: number;
   senderIdentity?: string;
+  messageHash?: string;
 };
 
 export async function saveUnprocessed(data: UnprocessedParameter): Promise<string> {

@@ -30,12 +30,12 @@ interface Message {
 }
 
 // Some websocket nonsense
-export function processMessage(message: string, options: any = {}) {
+export function processMessage(message: string,  options: any = {}, messageHash?: string) {
   try {
     const dataPlaintext = new Uint8Array(StringUtils.encode(message, 'base64'));
     const messageBuf = SignalService.WebSocketMessage.decode(dataPlaintext);
     if (messageBuf.type === SignalService.WebSocketMessage.Type.REQUEST) {
-      Receiver.handleRequest(messageBuf.request?.body, options);
+      Receiver.handleRequest(messageBuf.request?.body, options, messageHash);
     }
   } catch (error) {
     const info = {
@@ -225,6 +225,7 @@ export class SwarmPolling {
     const arrayOfResults = _.compact(arrayOfResultsWithNull);
 
     // Merge results into one list of unique messages
+    console.log({arrayOfResults});
     const messages = _.uniqBy(_.flatten(arrayOfResults), (x: any) => x.hash);
 
     // if all snodes returned an error (null), no need to update the lastPolledTimestamp
@@ -258,7 +259,7 @@ export class SwarmPolling {
 
     newMessages.forEach((m: Message) => {
       const options = isGroup ? { conversationId: pkStr } : {};
-      processMessage(m.data, options);
+      processMessage(m.data,  options, m.hash);
     });
   }
 

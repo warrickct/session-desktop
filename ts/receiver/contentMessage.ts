@@ -17,8 +17,10 @@ import { ConversationTypeEnum } from '../models/conversation';
 import { removeMessagePadding } from '../session/crypto/BufferPadding';
 import { perfEnd, perfStart } from '../session/utils/Performance';
 import { getAllCachedECKeyPair } from './closedGroups';
+import { getMessageBySenderAndTimestamp } from '../data/data';
+import { deleteMessageByHash } from '../session/snode_api/SNodeAPI';
 
-export async function handleContentMessage(envelope: EnvelopePlus) {
+export async function handleContentMessage(envelope: EnvelopePlus, messageHash?: string) {
   try {
     const plaintext = await decrypt(envelope, envelope.content);
 
@@ -30,7 +32,7 @@ export async function handleContentMessage(envelope: EnvelopePlus) {
     }
     perfStart(`innerHandleContentMessage-${envelope.id}`);
 
-    await innerHandleContentMessage(envelope, plaintext);
+    await innerHandleContentMessage(envelope, plaintext, messageHash);
     perfEnd(`innerHandleContentMessage-${envelope.id}`, 'innerHandleContentMessage');
   } catch (e) {
     window?.log?.warn(e);
@@ -323,7 +325,8 @@ function shouldDropBlockedUserMessage(content: SignalService.Content): boolean {
 
 export async function innerHandleContentMessage(
   envelope: EnvelopePlus,
-  plaintext: ArrayBuffer
+  plaintext: ArrayBuffer,
+  messageHash?: string
 ): Promise<void> {
   try {
     perfStart(`SignalService.Content.decode-${envelope.id}`);
@@ -354,7 +357,7 @@ export async function innerHandleContentMessage(
         content.dataMessage.profileKey = null;
       }
       perfStart(`handleDataMessage-${envelope.id}`);
-      await handleDataMessage(envelope, content.dataMessage);
+      await handleDataMessage(envelope, content.dataMessage, messageHash);
       perfEnd(`handleDataMessage-${envelope.id}`, 'handleDataMessage');
       return;
     }
@@ -393,6 +396,9 @@ export async function innerHandleContentMessage(
         'handleDataExtractionNotification'
       );
       return;
+    }
+    if (content.unsendMessage) {
+      await handleUnsendMessage(envelope, content.unsendMessage as SignalService.Unsend);
     }
   } catch (e) {
     window?.log?.warn(e);
@@ -478,6 +484,70 @@ async function handleTypingMessage(
       isTyping: started,
       sender: source,
     });
+  }
+}
+
+/**
+ * delete message from user swarm and delete locally upon receiving unsend request
+ * @param envelope 
+ * @param unsendMessage data required to delete message
+ */
+async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: SignalService.Unsend) {
+  // const { timestamp, author } = unsendMessage; // TODO: implement I assume
+  const { source } = envelope;
+  const { author, timestamp } = unsendMessage;
+
+  console.log({ unsendMessage });
+
+  await removeFromCache(envelope);
+
+  //#region early exit conditions
+  if (!unsendMessage || !source) {
+    window?.log?.error('UnsendMessageHandler:: Invalid parameters -- dropping message.')
+  }
+
+  if (!timestamp) {
+    window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message')
+  }
+
+  //#endregion
+
+  const conversation = getConversationController().get(source);
+  if (conversation) {
+    // TODO: don't know if I actually need the conversation controller.
+
+    // 1. lookup the message using the timestamp and author (and maybe the convo?)
+    // 1.1 obtain the hash from the message 
+    // 2. delete from swarm using the SnodeRPC delete message request. (ensure it works completely)
+
+    // 3. delete the message from user database i.e. delete locally
+
+    /**
+     * Pseudocode
+     * const hashToDelete = messageDatabaseLookup(author, timestamp).hash;
+     * 
+     * SnodeAPI.deleteMessage(hashToDelete);
+     * 
+     * deleteMessageFromDb() - maybe this is given to deleteMessage as a success callback? 
+     * 
+     */
+
+    // console.log({toNumberTs:Lodash.toNumber(timestamp) });
+
+    const messageToDelete = await getMessageBySenderAndTimestamp({
+      source: author,
+      timestamp: Lodash.toNumber(timestamp) // TODO: this might be wrong conversion.
+    });
+
+    console.log({messageToDelete});
+    const messageHash = messageToDelete?.getPropsForMessage().messageHash;
+    console.log('toDeleteHash: ', messageHash)
+
+    if (messageHash) {
+      debugger;
+      deleteMessageByHash([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+    }
+
   }
 }
 

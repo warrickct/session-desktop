@@ -62,6 +62,7 @@ module.exports = {
   getMessageBySender,
   getMessageBySenderAndServerId,
   getMessageBySenderAndServerTimestamp,
+  getMessageBySenderAndTimestamp,
   getMessageIdsFromServerIds,
   getMessageById,
   getMessagesBySentAt,
@@ -191,7 +192,7 @@ function migrateSchemaVersion(db) {
   const newUserVersion = schemaVersion > 18 ? 16 : schemaVersion;
   console.log(
     'migrateSchemaVersion: Migrating from schema_version ' +
-      `${schemaVersion} to user_version ${newUserVersion}`
+    `${schemaVersion} to user_version ${newUserVersion}`
   );
 
   setUserVersion(db, newUserVersion);
@@ -833,6 +834,7 @@ const LOKI_SCHEMA_VERSIONS = [
   updateToLokiSchemaVersion13,
   updateToLokiSchemaVersion14,
   updateToLokiSchemaVersion15,
+  updateToLokiSchemaVersion16,
 ];
 
 function updateToLokiSchemaVersion1(currentVersion, db) {
@@ -1188,6 +1190,33 @@ function updateToLokiSchemaVersion15(currentVersion, db) {
       DROP TABLE pairingAuthorisations;
       DROP TRIGGER messages_on_delete;
       DROP TRIGGER messages_on_update;
+    `);
+
+    writeLokiSchemaVersion(targetVersion, db);
+  })();
+  console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
+}
+
+function updateToLokiSchemaVersion16(currentVersion, db) {
+  const targetVersion = 16;
+  if (currentVersion >= targetVersion) {
+    return;
+  }
+  console.log(`updateToLokiSchemaVersion${targetVersion}: starting...`);
+
+  db.transaction(() => {
+    db.exec(`
+      ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN serverHash TEXT;
+      ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN isDeleted INTEGER;
+
+    CREATE INDEX messages_serverHash ON ${MESSAGES_TABLE} (
+      serverHash
+
+    ) WHERE serverHash IS NOT NULL;
+
+    CREATE INDEX messages_isDeleted ON ${MESSAGES_TABLE} (
+      isDeleted
+    ) WHERE isDeleted IS NOT NULL;
     `);
 
     writeLokiSchemaVersion(targetVersion, db);
@@ -2040,6 +2069,22 @@ function getMessageBySenderAndServerId({ source, serverId }) {
   return map(rows, row => jsonToObject(row.json));
 }
 
+
+function getMessageBySenderAndTimestamp({ source, timestamp }) {
+  const rows = globalInstance
+    .prepare(
+      `SELECT json FROM ${MESSAGES_TABLE} WHERE
+      source = $source AND
+      timestamp = $timestamp;`
+    )
+    .all({
+      source,
+      timestamp,
+    });
+
+  return map(rows, row => jsonToObject(row.json));
+}
+
 function getMessageBySenderAndServerTimestamp({ source, serverTimestamp }) {
   const rows = globalInstance
     .prepare(
@@ -2230,10 +2275,12 @@ function getNextExpiringMessage() {
 
 /* Unproccessed a received messages not yet processed */
 function saveUnprocessed(data) {
-  const { id, timestamp, version, attempts, envelope, senderIdentity } = data;
+  const { id, timestamp, version, attempts, envelope, senderIdentity, messageHash } = data;
   if (!id) {
     throw new Error(`saveUnprocessed: id was falsey: ${id}`);
   }
+
+  console.log({zzz: timestamp, messageHash});
 
   globalInstance
     .prepare(

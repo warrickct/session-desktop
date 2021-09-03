@@ -98,6 +98,11 @@ export interface MessageAttributes {
    * We display a small message just below the message referenced
    */
   dataExtractionNotification?: DataExtractionNotificationMsg;
+
+  /**
+   * This field is used for unsending messages and used in sending unsend message requests. 
+   */
+  messageHash?: string;
 }
 
 export interface DataExtractionNotificationMsg {
@@ -165,6 +170,7 @@ export interface MessageAttributesOptionals {
   sync?: boolean;
   snippet?: any;
   direction?: any;
+  messageHash?: string
 }
 
 /**

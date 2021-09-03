@@ -50,6 +50,7 @@ import {
 import { ed25519Str } from '../session/onions/onionPath';
 import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsManager';
 import { IMAGE_JPEG } from '../types/MIME';
+import { UnsendMessage } from '../session/messages/outgoing/controlMessage/UnsendMessage';
 
 export enum ConversationTypeEnum {
   GROUP = 'group',
@@ -554,9 +555,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: fileName || null,
               thumbnail: thumbnail
                 ? {
-                    ...(await loadAttachmentData(thumbnail)),
-                    objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
-                  }
+                  ...(await loadAttachmentData(thumbnail)),
+                  objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
+                }
                 : null,
             };
           })
@@ -579,9 +580,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: null,
               thumbnail: image
                 ? {
-                    ...(await loadAttachmentData(image)),
-                    objectUrl: getAbsoluteAttachmentPath(image.path),
-                  }
+                  ...(await loadAttachmentData(image)),
+                  objectUrl: getAbsoluteAttachmentPath(image.path),
+                }
                 : null,
             };
           })
@@ -709,6 +710,130 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       return null;
     }
   }
+
+
+  // public sendTypingMessage(isTyping: boolean) {
+  //   if (!this.isPrivate()) {
+  //     return;
+  //   }
+
+  //   const recipientId = this.id;
+
+  //   if (!recipientId) {
+  //     throw new Error('Need to provide either recipientId');
+  //   }
+
+  //   const primaryDevicePubkey = window.storage.get('primaryDevicePubKey');
+  //   if (recipientId && primaryDevicePubkey === recipientId) {
+  //     // note to self
+  //     return;
+  //   }
+
+  //   const typingParams = {
+  //     timestamp: Date.now(),
+  //     isTyping,
+  //     typingTimestamp: Date.now(),
+  //   };
+  //   const typingMessage = new TypingMessage(typingParams);
+
+  //   // send the message to a single recipient if this is a session chat
+  //   const device = new PubKey(recipientId);
+  //   getMessageQueue()
+  //     .sendToPubKey(device, typingMessage)
+  //     .catch(window?.log?.error);
+  // }
+
+  /**
+   * Creates an unsend request using protobuf and adds to messageQueue.
+   * @param message Message to unsend
+   * @returns 
+   */
+  public unsendMessage(message: MessageModel) {
+    // TODO: remove logging
+    window.log.info('Sending unsend request');
+    console.log({ destination: this.id });
+
+    //#region checking for early exit conditions
+    if (!message.getPropsForMessage().messageHash) {
+      console.log("@ Message has no hash - aborting unsend message");
+      return;
+    }
+
+    // handling is private (idk what that means)
+    if (!this.isPrivate()) {
+      console.log({ isPrivate: this.isPrivate });
+      return;
+    }
+
+    // handling no destination
+    const destinationId = this.id;
+    if (!destinationId) {
+      return;
+    }
+
+    const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
+    if (destinationId && ownPrimaryDevicePubkey === destinationId) {
+      // note to self
+      return;
+    }
+    //#endregion
+
+    //#region building request
+    const author = message.isOutgoing() ? ownPrimaryDevicePubkey : message.id;
+
+    const timestamp = message.getPropsForMessage().timestamp;
+    console.log({message});
+    if (!timestamp) {
+      console.error('cannot find timestamp');
+      return;
+    }
+
+    const unsendParams = {
+      timestamp,
+      author
+    }
+
+    console.log({unsendParams});
+
+    const unsendMessage = new UnsendMessage(unsendParams);
+    //#endregion
+
+    //#region sending
+    // if 1-1 session === === === === === === === === === ===
+    getMessageQueue()
+      .sendToPubKey(new PubKey(destinationId), unsendMessage)
+      .catch(window?.log?.error);
+
+    // if group ============================== 
+    // const messageParams: ClosedGroupNewMessageParams = { groupId: groupPublicKey,
+    //   name: groupName,
+    //   members: listOfMembers,
+    //   admins,
+    //   keypair: encryptionKeyPair,
+    //   timestamp: Date.now(),
+    //   identifier: dbMessage.id,
+    //   expireTimer: existingExpireTimer,
+    // };
+    // const message = new ClosedGroupNewMessage(messageParams);
+    // return getMessageQueue().sendToPubKeyNonDurably(PubKey.cast(m), message);
+
+    // OR
+    // getMessageQueue().sendToGroup(new PubKey(destinationId), unsendMessage)
+
+
+    // if open group ========================================
+
+
+    // TODO:
+    /**
+     * Need to figure out the most correct way to send to a closed group.
+     * 
+     */
+
+    //#endregion
+  }
+
+
   public async sendMessage(msg: SendMessageType) {
     const { attachments, body, groupInvitation, preview, quote } = msg;
     this.clearTypingTimers();

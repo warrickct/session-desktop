@@ -43,6 +43,7 @@ import { FSv2 } from '../fileserver';
 import { fromHexToArray, toHex } from '../session/utils/String';
 import { SessionButtonColor } from '../components/session/SessionButton';
 import { perfEnd, perfStart } from '../session/utils/Performance';
+import { deleteMessageByHash } from '../session/snode_api/SNodeAPI';
 
 export const getCompleteUrlForV2ConvoId = async (convoId: string) => {
   if (convoId.match(openGroupV2ConversationIdRegex)) {
@@ -455,6 +456,30 @@ export async function deleteMessagesById(
   const doDelete = async () => {
     let toDeleteLocallyIds: Array<string>;
 
+    // unsend logic
+    if (true) {
+      const msgHashes: Array<string> = [];
+
+      for (let index = 0; index < selectedMessages.length; index++) {
+        const msgHash = selectedMessages[index].getMessageModelProps().propsForMessage.messageHash;
+        if (msgHash !== null) {
+          msgHashes.push(msgHash);
+        }
+      }
+
+      // TODO: test - sending unsend request to session recipient.
+
+      selectedMessages.map(selectedMessage => {
+        conversationModel.unsendMessage(selectedMessage);
+      })
+
+      console.log({ msgHashes });
+      if (msgHashes.length > 0) {
+        await deleteMessageByHash(msgHashes);
+      }
+    }
+
+
     if (isServerDeletable) {
       // Get our Moderator status
       const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
@@ -466,9 +491,9 @@ export async function deleteMessagesById(
       // const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
       const isAllOurs = selectedMessages.every(message => {
         ourDevicePubkey === message.getSource();
-        console.log({source: ourDevicePubkey});
+        console.log({ source: ourDevicePubkey });
       });
-      
+
       if (!isAllOurs && !isAdmin) {
         ToastUtils.pushMessageDeleteForbidden();
 
