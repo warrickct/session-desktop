@@ -1,65 +1,48 @@
 import React from 'react';
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 import { MessageDeliveryStatus } from '../../../models/messageType';
-import { SessionIcon, SessionIconSize, SessionIconType } from '../../session/icon';
+import { SessionIcon } from '../../session/icon';
 
 const MessageStatusSendingContainer = styled.div`
   display: inline-block;
+  align-self: flex-end;
   margin-bottom: 2px;
   margin-inline-start: 5px;
 `;
 
 const MessageStatusSending = () => {
-  const iconColor = useTheme().colors.textColor;
+  const iconColor = 'var(--color-text)';
   return (
     <MessageStatusSendingContainer>
-      <SessionIcon
-        rotateDuration={2}
-        iconColor={iconColor}
-        iconType={SessionIconType.Sending}
-        iconSize={SessionIconSize.Tiny}
-      />
+      <SessionIcon rotateDuration={2} iconColor={iconColor} iconType="sending" iconSize={'tiny'} />
     </MessageStatusSendingContainer>
   );
 };
 
 const MessageStatusSent = () => {
-  const iconColor = useTheme().colors.textColor;
+  const iconColor = 'var(--color-text)';
 
   return (
     <MessageStatusSendingContainer>
-      <SessionIcon
-        iconColor={iconColor}
-        iconType={SessionIconType.CircleCheck}
-        iconSize={SessionIconSize.Tiny}
-      />
+      <SessionIcon iconColor={iconColor} iconType="circleCheck" iconSize={'tiny'} />
     </MessageStatusSendingContainer>
   );
 };
 
 const MessageStatusRead = () => {
-  const iconColor = useTheme().colors.textColor;
+  const iconColor = 'var(--color-text)';
 
   return (
     <MessageStatusSendingContainer>
-      <SessionIcon
-        iconColor={iconColor}
-        iconType={SessionIconType.DoubleCheckCircleFilled}
-        iconSize={SessionIconSize.Tiny}
-      />
+      <SessionIcon iconColor={iconColor} iconType="doubleCheckCircleFilled" iconSize={'tiny'} />
     </MessageStatusSendingContainer>
   );
 };
 
 const MessageStatusError = () => {
-  const theme = useTheme();
   return (
     <MessageStatusSendingContainer title={window.i18n('sendFailed')}>
-      <SessionIcon
-        iconColor={theme.colors.destructive}
-        iconType={SessionIconType.Error}
-        iconSize={SessionIconSize.Tiny}
-      />
+      <SessionIcon iconColor={'var(--color-destructive'} iconType="error" iconSize={'tiny'} />
     </MessageStatusSendingContainer>
   );
 };

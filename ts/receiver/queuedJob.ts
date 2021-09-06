@@ -387,7 +387,9 @@ export async function handleMessageJob(
   messageHash?: string
 ) {
   window?.log?.info(
-    `Starting handleDataMessage for message ${message.idForLogging()} in conversation ${conversation.idForLogging()}`
+    `Starting handleDataMessage for message ${message.idForLogging()}, ${message.get(
+      'serverTimestamp'
+    ) || message.get('timestamp')} in conversation ${conversation.idForLogging()}`
   );
 
   try {

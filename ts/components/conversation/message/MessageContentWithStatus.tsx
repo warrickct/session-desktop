@@ -8,7 +8,6 @@ import {
   getMessageContentWithStatusesSelectorProps,
   isMessageSelectionMode,
 } from '../../../state/selectors/conversations';
-import { Flex } from '../../basic/Flex';
 import { MessageAuthorText } from './MessageAuthorText';
 import { MessageContent } from './MessageContent';
 import { MessageContextMenu } from './MessageContextMenu';
@@ -18,7 +17,6 @@ export type MessageContentWithStatusSelectorProps = Pick<MessageRenderingProps, 
 
 type Props = {
   messageId: string;
-  expiring: boolean;
   onQuoteClick: (quote: QuoteClickOptions) => void;
   ctxMenuID: string;
   isDetailView?: boolean;
@@ -58,7 +56,7 @@ export const MessageContentWithStatuses = (props: Props) => {
     [window.contextMenuShown, props?.messageId, multiSelectMode, props?.isDetailView]
   );
 
-  const { messageId, expiring, onQuoteClick, ctxMenuID, isDetailView } = props;
+  const { messageId, onQuoteClick, ctxMenuID, isDetailView } = props;
   if (!contentProps) {
     return null;
   }
@@ -67,16 +65,12 @@ export const MessageContentWithStatuses = (props: Props) => {
 
   return (
     <div
-      className={classNames(
-        'module-message',
-        `module-message--${direction}`,
-        expiring ? 'module-message--expired' : null
-      )}
+      className={classNames('module-message', `module-message--${direction}`)}
       role="button"
       onClick={onClickOnMessageOuterContainer}
     >
       <MessageStatus messageId={messageId} isCorrectSide={isIncoming} />
-      <Flex container={true} flexDirection="column">
+      <div>
         <MessageAuthorText messageId={messageId} />
 
         <MessageContent
@@ -84,7 +78,7 @@ export const MessageContentWithStatuses = (props: Props) => {
           isDetailView={isDetailView}
           onQuoteClick={onQuoteClick}
         />
-      </Flex>
+      </div>
       <MessageStatus messageId={messageId} isCorrectSide={!isIncoming} />
       <MessageContextMenu messageId={messageId} contextMenuId={ctxMenuID} />
     </div>
