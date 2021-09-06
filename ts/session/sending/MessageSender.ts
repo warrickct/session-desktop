@@ -25,7 +25,7 @@ import { addMessagePadding } from '../crypto/BufferPadding';
 export async function send(
   message: RawMessage,
   attempts: number = 3,
-  retryMinTimeout?: number // in ms
+  retryMinTimeout?: number, // in ms
 ): Promise<Uint8Array> {
   const device = PubKey.cast(message.device);
   const { plainTextBuffer, encryption, timestamp, ttl } = message;
@@ -40,7 +40,7 @@ export async function send(
 
   return pRetry(
     async () => {
-      await LokiMessageApi.sendMessage(device.key, data, timestamp, ttl);
+      await LokiMessageApi.sendMessage(device.key, data, timestamp, ttl, { messageIdForHash: message.identifier});
       return data;
     },
     {

@@ -18,7 +18,7 @@ import { removeMessagePadding } from '../session/crypto/BufferPadding';
 import { perfEnd, perfStart } from '../session/utils/Performance';
 import { getAllCachedECKeyPair } from './closedGroups';
 import { getMessageBySenderAndTimestamp } from '../data/data';
-import { deleteMessageByHash } from '../session/snode_api/SNodeAPI';
+import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export async function handleContentMessage(envelope: EnvelopePlus, messageHash?: string) {
   try {
@@ -538,7 +538,7 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
 
   if (messageHash) {
-    deleteMessageByHash([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+    networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
   }
 }
 

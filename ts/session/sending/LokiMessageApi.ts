@@ -23,7 +23,8 @@ export async function sendMessage(
   ttl: number,
   options: {
     isPublic?: boolean;
-  } = {}
+    messageIdForHash?: string;
+  } = {},
 ): Promise<void> {
   const { isPublic = false } = options;
 
@@ -52,7 +53,7 @@ export async function sendMessage(
     // No pRetry here as if this is a bad path it will be handled and retried in lokiOnionFetch.
     // the only case we could care about a retry would be when the usedNode is not correct,
     // but considering we trigger this request with a few snode in //, this should be fine.
-    const successfulSend = await storeOnNode(usedNode, params);
+    const successfulSend = await storeOnNode(usedNode, params, options.messageIdForHash);
     if (successfulSend) {
       return usedNode;
     }

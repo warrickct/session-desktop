@@ -28,7 +28,7 @@ import {
   stringToUint8Array,
   toHex,
 } from '../utils/String';
-import { Snode } from '../../data/data';
+import { getMessageById, Snode } from '../../data/data';
 import { updateIsOnline } from '../../state/ducks/onion';
 import { ed25519Str } from '../onions/onionPath';
 import { StringUtils, UserUtils } from '../utils';
@@ -199,6 +199,7 @@ export type SendParams = {
   ttl: string;
   timestamp: string;
   data: string;
+  messageId?: string;
 };
 
 /**
@@ -528,7 +529,7 @@ export async function getSnodePoolFromSnode(targetNode: Snode): Promise<Array<Sn
   }
 }
 
-export async function storeOnNode(targetNode: Snode, params: SendParams): Promise<boolean> {
+export async function storeOnNode(targetNode: Snode, params: SendParams, messageId?: string): Promise<boolean> {
   try {
     // no retry here. If an issue is with the path this is handled in lokiOnionFetch
     // if there is an issue with the targetNode, we still send a few times this request to a few snodes in // already so it's handled
@@ -536,6 +537,23 @@ export async function storeOnNode(targetNode: Snode, params: SendParams): Promis
 
     if (!result || result.status !== 200) {
       return false;
+    }
+
+
+    if (messageId && result.body) {
+      const messageHash = JSON.parse(result.body).hash;
+      if (messageHash) {
+        console.warn('Able to store message with hash: ', messageHash);
+        const message = await getMessageById(messageId);
+        if (message) {
+          console.warn('Found message to update hash for: ', message);
+          message.set({
+            messageHash
+          });
+          await message.commit();
+          console.warn('message with updated hash: ', message);
+        }
+      }
     }
 
     return true;
@@ -779,7 +797,7 @@ export const TEST_getMinTimeout = () => 500;
  * @param messageId 
  * @returns 
  */
-export const deleteMessageByHash = async (msgHashes: string[]): Promise<Array<string> | null> => {
+export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<string> | null> => {
   const sodium = await getSodium();
   const userX25519PublicKey = UserUtils.getOurPubKeyStrFromCache();
 

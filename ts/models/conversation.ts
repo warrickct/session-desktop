@@ -721,11 +721,11 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
-      console.log("@ Message has no hash - aborting unsend message");
+      console.warn("@ Message has no hash - aborting unsend message");
       return;
     }
 
-    // handling is private (idk what that means)
+    // handling is private
     if (!this.isPrivate()) {
       console.log({ isPrivate: this.isPrivate });
       return;
@@ -745,7 +745,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //#endregion
 
     //#region building request
-    const author = message.isOutgoing() ? ownPrimaryDevicePubkey : message.id;
+    const author = message.get('source');
 
     const timestamp = message.getPropsForMessage().timestamp;
     console.log({message});
@@ -773,7 +773,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       .sendToPubKey(new PubKey(destinationId), unsendMessage)
       .catch(window?.log?.error);
 
-    // if group ============================== 
+    // closed group ============================== 
     // const messageParams: ClosedGroupNewMessageParams = { groupId: groupPublicKey,
     //   name: groupName,
     //   members: listOfMembers,
@@ -786,12 +786,25 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     // const message = new ClosedGroupNewMessage(messageParams);
     // return getMessageQueue().sendToPubKeyNonDurably(PubKey.cast(m), message);
 
+    // if (this.isClosedGroup()) {
+    //   this.attrib.forEach(element => {
+        
+    //   });
+    // }
+
+
     // OR
     // getMessageQueue().sendToGroup(new PubKey(destinationId), unsendMessage)
 
 
     // if open group ========================================
-
+    // const openGroupMessageParams = {
+    //   identifier: this.id,
+    //   timestamp: Date.now(),
+    //   lokiProfile: UserUtils.getOurProfile(),
+    //   unsendMessage
+    // }
+    // getMessageQueue().sendToOpenGroupV2()
 
     // TODO:
     /**

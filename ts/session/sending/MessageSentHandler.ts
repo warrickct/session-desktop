@@ -84,9 +84,18 @@ export class MessageSentHandler {
      */
     const hasBodyOrAttachments = Boolean(
       dataMessage &&
-        (dataMessage.body || (dataMessage.attachments && dataMessage.attachments.length))
+      (dataMessage.body || (dataMessage.attachments && dataMessage.attachments.length))
     );
     const shouldNotifyPushServer = hasBodyOrAttachments && !isOurDevice;
+
+    try {
+      if (wrappedEnvelope) {
+        let xxx = SignalService.Envelope.decode(wrappedEnvelope)
+        console.log({ xxx });
+      }
+    } catch (e) {
+      console.log('xxx', e);
+    }
 
     if (shouldNotifyPushServer) {
       // notify the push notification server if needed

@@ -43,7 +43,7 @@ import { FSv2 } from '../fileserver';
 import { fromHexToArray, toHex } from '../session/utils/String';
 import { SessionButtonColor } from '../components/session/SessionButton';
 import { perfEnd, perfStart } from '../session/utils/Performance';
-import { deleteMessageByHash } from '../session/snode_api/SNodeAPI';
+import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export const getCompleteUrlForV2ConvoId = async (convoId: string) => {
   if (convoId.match(openGroupV2ConversationIdRegex)) {
@@ -497,11 +497,12 @@ export async function deleteMessagesById(
 
         selectedMessages.map(async (selectedMessage) => {
           await conversationModel.unsendMessage(selectedMessage);
+          console.warn("Sent unsend message successfully.");
         })
 
-        console.log({ msgHashes });
         if (msgHashes.length > 0) {
-          await deleteMessageByHash(msgHashes);
+          console.warn("Making Snode delete message request for message hashes:", msgHashes);
+          await networkDeleteMessages(msgHashes);
         }
       }
 

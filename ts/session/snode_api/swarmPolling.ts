@@ -225,7 +225,6 @@ export class SwarmPolling {
     const arrayOfResults = _.compact(arrayOfResultsWithNull);
 
     // Merge results into one list of unique messages
-    console.log({arrayOfResults});
     const messages = _.uniqBy(_.flatten(arrayOfResults), (x: any) => x.hash);
 
     // if all snodes returned an error (null), no need to update the lastPolledTimestamp

@@ -628,11 +628,11 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
   }
 
   conversation.queueJob(async () => {
-    // if (await isMessageDuplicate(data)) {
-    //   window?.log?.info('Received duplicate message. Dropping it.');
-    //   confirm();
-    //   return;
-    // }
+    if (await isMessageDuplicate(data)) {
+      window?.log?.info('Received duplicate message. Dropping it.');
+      confirm();
+      return;
+    }
     await handleMessageJob(msg, conversation, message, ourNumber, confirm, source, messageHash);
   });
 }
