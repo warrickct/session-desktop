@@ -834,6 +834,7 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
               messages: msgHashes,
               signature: signatureBase64,
             };
+            console.warn(deleteMessageParams);
             const ret = await snodeRpc(
               'delete',
               deleteMessageParams,

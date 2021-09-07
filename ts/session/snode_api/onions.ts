@@ -393,6 +393,7 @@ export async function decodeOnionResult(symmetricKey: ArrayBuffer, ciphertext: s
     parsedCiphertext = jsonRes.result;
   } catch (e) {
     // just try to get a json object from what is inside (for PN requests), if it fails, continue ()
+    console.error('Failed to decode onion result: ', e);
   }
   const ciphertextBuffer = await window.callWorker('fromBase64ToArrayBuffer', parsedCiphertext);
 
@@ -436,13 +437,15 @@ export async function processOnionResponse({
     window?.log?.warn(e);
   }
 
-  await processOnionRequestErrorOnPath(
-    response?.status || STATUS_NO_STATUS,
-    ciphertext,
-    guardNode.pubkey_ed25519,
-    lsrpcEd25519Key,
-    associatedWith
-  );
+  if (false) {
+    await processOnionRequestErrorOnPath(
+      response?.status || STATUS_NO_STATUS,
+      ciphertext,
+      guardNode.pubkey_ed25519,
+      lsrpcEd25519Key,
+      associatedWith
+    );
+  }
 
   if (!ciphertext) {
     window?.log?.warn(
@@ -497,7 +500,7 @@ export async function processOnionResponse({
       associatedWith,
     });
 
-    console.log({response: jsonRes});
+    console.log({ response: jsonRes });
 
     return jsonRes as SnodeResponse;
   } catch (e) {
@@ -703,6 +706,7 @@ export const sendOnionRequestHandlingSnodeEject = async ({
     test,
   });
 
+  console.warn({ processed });
   return processed;
 };
 
@@ -871,7 +875,8 @@ export async function lokiOnionFetch(
   try {
     const retriedResult = await pRetry(
       async () => {
-        return onionFetchRetryable(targetNode, body, associatedWith, test);
+        const result = await onionFetchRetryable(targetNode, body, associatedWith, test);
+        return result;
       },
       {
         retries: 4,

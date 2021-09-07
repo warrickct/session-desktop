@@ -530,6 +530,8 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
    * 
    */
 
+  console.warn("Handling unsend message");
+
   const messageToDelete = await getMessageBySenderAndTimestamp({
     source: author,
     timestamp: Lodash.toNumber(timestamp)
