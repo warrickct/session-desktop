@@ -103,6 +103,12 @@ export interface MessageAttributes {
    * This field is used for unsending messages and used in sending unsend message requests. 
    */
   messageHash?: string;
+
+
+  /**
+   * This field is used for unsending messages and used in sending unsend message requests. 
+   */
+  isDeleted?: number;
 }
 
 export interface DataExtractionNotificationMsg {
@@ -170,7 +176,8 @@ export interface MessageAttributesOptionals {
   sync?: boolean;
   snippet?: any;
   direction?: any;
-  messageHash?: string
+  messageHash?: string;
+  isDeleted?: number;
 }
 
 /**

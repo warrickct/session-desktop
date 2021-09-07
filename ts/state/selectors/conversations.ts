@@ -782,7 +782,7 @@ export const getMessageTextProps = createSelector(getMessagePropsByMessageId, (p
     return undefined;
   }
 
-  const { conversationType, convoId, direction, status, text } = props.propsForMessage;
+  const { conversationType, convoId, direction, status, text, isDeleted } = props.propsForMessage;
 
   const msgProps: MessageTextSelectorProps = {
     conversationType,
@@ -790,6 +790,7 @@ export const getMessageTextProps = createSelector(getMessagePropsByMessageId, (p
     direction,
     status,
     text,
+    isDeleted
   };
 
   return msgProps;
@@ -980,6 +981,7 @@ export const getGenericReadableMessageSelectorProps = createSelector(
       isUnread,
       receivedAt,
       isKickedFromGroup,
+      isDeleted
     } = props.propsForMessage;
 
     const msgProps: GenericReadableMessageSelectorProps = {
@@ -992,6 +994,7 @@ export const getGenericReadableMessageSelectorProps = createSelector(
       convoId: props.propsForMessage.convoId,
       receivedAt,
       isKickedFromGroup,
+      isDeleted
     };
 
     return msgProps;

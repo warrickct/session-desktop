@@ -125,6 +125,9 @@ const channelsToMake = {
   getSeenMessagesByHashList,
   getLastHashBySnode,
 
+  // TODO: decide where to place this
+  markMessageAsDeleted,
+
   getUnprocessedCount,
   getAllUnprocessed,
   getUnprocessedById,
@@ -646,6 +649,13 @@ export async function removeMessage(id: string): Promise<void> {
 // Note: this method will not clean up external files, just delete from SQL
 export async function _removeMessages(ids: Array<string>): Promise<void> {
   await channels.removeMessage(ids);
+}
+
+export async function markMessageAsDeleted(
+  id: number
+): Promise<boolean> {
+  let result = await channels.markMessageAsDeleted(id);
+  return result;
 }
 
 export async function getMessageIdsFromServerIds(

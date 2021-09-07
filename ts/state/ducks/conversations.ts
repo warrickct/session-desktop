@@ -184,7 +184,8 @@ export type PropsForMessageWithoutConvoProps = {
   expirationTimestamp: number | null;
   isExpired: boolean;
   isTrustedForAttachmentDownload: boolean;
-  messageHash: string | null
+  messageHash: string | null;
+  isDeleted: number | undefined;
 };
 
 export type PropsForMessageWithConvoProps = PropsForMessageWithoutConvoProps & {
@@ -199,6 +200,7 @@ export type PropsForMessageWithConvoProps = PropsForMessageWithoutConvoProps & {
   isSenderAdmin: boolean;
   isDeletable: boolean;
   isBlocked: boolean;
+  isDeleted?: number;
 };
 
 export type LastMessageType = {

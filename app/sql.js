@@ -73,6 +73,7 @@ module.exports = {
   getNextExpiringMessage,
   getMessagesByConversation,
   getFirstUnreadMessageIdInConversation,
+  markMessageAsDeleted,
 
   getUnprocessedCount,
   getAllUnprocessed,
@@ -1975,6 +1976,17 @@ function cleanSeenMessages() {
   });
 }
 
+function markMessageAsDeleted(id) {
+  try {
+    globalInstance .prepare(
+        `UPDATE ${MESSAGES_TABLE} SET isDeleted = true,  WHERE id = $id);`
+      )
+      .run({ id });
+  } catch (e) {
+    console.warn(`Failed to mark message as deleted ${e}`);
+  }
+}
+
 function saveMessages(arrayOfMessages) {
   globalInstance.transaction(() => {
     map(arrayOfMessages, message => saveMessage(message));
@@ -2279,8 +2291,6 @@ function saveUnprocessed(data) {
   if (!id) {
     throw new Error(`saveUnprocessed: id was falsey: ${id}`);
   }
-
-  console.log({zzz: timestamp, messageHash});
 
   globalInstance
     .prepare(

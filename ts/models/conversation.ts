@@ -723,7 +723,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
-      console.warn("@ Message has no hash - aborting unsend message");
+      console.warn("Message has no hash - aborting unsend message");
       return;
     }
 
@@ -752,7 +752,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const timestamp = message.getPropsForMessage().timestamp;
     console.log({message});
     if (!timestamp) {
-      console.error('cannot find timestamp');
+      console.warn('cannot find timestamp - aborting unsend request');
       return;
     }
 
@@ -760,8 +760,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       timestamp,
       author
     }
-
-    console.log({unsendParams});
 
     let msgFromDb = await getMessageBySenderAndTimestamp({source: author, timestamp});
     console.log({msgFromDb});

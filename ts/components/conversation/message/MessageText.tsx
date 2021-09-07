@@ -14,7 +14,7 @@ type Props = {
 
 export type MessageTextSelectorProps = Pick<
   MessageRenderingProps,
-  'text' | 'direction' | 'status' | 'conversationType' | 'convoId'
+  'text' | 'direction' | 'status' | 'conversationType' | 'convoId' | 'isDeleted'
 >;
 
 export const MessageText = (props: Props) => {
@@ -24,9 +24,9 @@ export const MessageText = (props: Props) => {
   if (!selected) {
     return null;
   }
-  const { text, direction, status, conversationType, convoId } = selected;
+  const { text, direction, status, conversationType, convoId, isDeleted } = selected;
 
-  const contents =
+  const contents = isDeleted ? 'Message deleted' :
     direction === 'incoming' && status === 'error' ? window.i18n('incomingError') : text;
 
   if (!contents) {

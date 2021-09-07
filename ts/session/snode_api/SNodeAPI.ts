@@ -797,7 +797,7 @@ export const TEST_getMinTimeout = () => 500;
  * @param messageId 
  * @returns 
  */
-export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<string> | null> => {
+export const networkDeleteMessages = async (hashes: string[]): Promise<any> => {
   const sodium = await getSodium();
   const userX25519PublicKey = UserUtils.getOurPubKeyStrFromCache();
 
@@ -823,7 +823,7 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
 
         return pRetry(
           async () => {
-            const verificationData = StringUtils.encode(`${msgHashes.join('')}`, 'utf8');
+            const verificationData = StringUtils.encode(`delete${hashes.join('')}`, 'utf8');
             const message = new Uint8Array(verificationData);
             const signature = sodium.crypto_sign_detached(message, edKeyPrivBytes);
             const signatureBase64 = fromUInt8ArrayToBase64(signature);
@@ -831,10 +831,9 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
             const deleteMessageParams = {
               pubkey: userX25519PublicKey,
               pubkey_ed25519: userED25519KeyPair.pubKey.toUpperCase(),
-              messages: msgHashes,
+              messages: hashes,
               signature: signatureBase64,
             };
-            console.warn(deleteMessageParams);
             const ret = await snodeRpc(
               'delete',
               deleteMessageParams,
@@ -875,6 +874,7 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
                   const snodePubkey = snode[0];
                   const snodeJson = snode[1];
 
+                  //#region failure handling
                   const isFailed = snodeJson.failed || false;
 
                   if (isFailed) {
@@ -895,23 +895,24 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
                     }
                     return snodePubkey;
                   }
+                  //#endregion
 
-                  // TODO: fix verfification to use msgHash and no timestamp
-                  // const hashes = snodeJson.deleted as Array<string>;
-                  // const signatureSnode = snodeJson.signature as string;
-                  // The signature format is ( PUBKEY_HEX || TIMESTAMP || DELETEDHASH[0] || ... || DELETEDHASH[N] )
-                  // const dataToVerify = `${userX25519PublicKey}${timestamp}${hashes.join('')}`;
-                  // const dataToVerifyUtf8 = StringUtils.encode(dataToVerify, 'utf8');
-                  // const isValid = sodium.crypto_sign_verify_detached(
-                  //   fromBase64ToArray(signatureSnode),
-                  //   new Uint8Array(dataToVerifyUtf8),
-                  //   fromHexToArray(snodePubkey)
-                  // );
-                  // if (!isValid) {
-                  //   return snodePubkey;
-                  // }
-                  // return null;
+                  //#region verification
+                  const responseHashes = snodeJson.deleted as Array<string>;
+                  const signatureSnode = snodeJson.signature as string;
+                  // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
+                  const dataToVerify = `${userX25519PublicKey}${hashes.join('')}${responseHashes.join('')}`;
+                  const dataToVerifyUtf8 = StringUtils.encode(dataToVerify, 'utf8');
+                  const isValid = sodium.crypto_sign_verify_detached(
+                    fromBase64ToArray(signatureSnode),
+                    new Uint8Array(dataToVerifyUtf8),
+                    fromHexToArray(snodePubkey)
+                  );
+                  if (!isValid) {
+                    return snodePubkey;
+                  }
                   return null;
+                  //#endregion
                 })
               );
 
@@ -948,8 +949,8 @@ export const networkDeleteMessages = async (msgHashes: string[]): Promise<Array<
 
     return maliciousSnodes;
   } catch (e) {
-    // window?.log?.warn('failed to delete everything on network:', e);
-    window?.log?.warn('failed to delete messages on network', e);
+    window?.log?.warn('failed to delete message on network:', e);
     return null;
   }
-};
+
+}

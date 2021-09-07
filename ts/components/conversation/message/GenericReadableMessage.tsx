@@ -32,6 +32,7 @@ export type GenericReadableMessageSelectorProps = Pick<
   | 'isKickedFromGroup'
   | 'isExpired'
   | 'convoId'
+  | 'isDeleted'
 >;
 
 type ExpiringProps = {
@@ -100,6 +101,8 @@ export const GenericReadableMessage = (props: Props) => {
     getGenericReadableMessageSelectorProps(state as any, props.messageId)
   );
 
+  console.warn({msgProps});
+
   const expiringProps: ExpiringProps = {
     convoId: msgProps?.convoId,
     expirationLength: msgProps?.expirationLength,
@@ -144,7 +147,12 @@ export const GenericReadableMessage = (props: Props) => {
     isUnread,
     expirationLength,
     expirationTimestamp,
+    // isDeleted
   } = msgProps;
+
+  // if (isDeleted) {
+  //   return null; 
+  // }
 
   if (isExpired) {
     return null;

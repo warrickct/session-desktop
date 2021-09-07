@@ -18,6 +18,7 @@ import { removeMessagePadding } from '../session/crypto/BufferPadding';
 import { perfEnd, perfStart } from '../session/utils/Performance';
 import { getAllCachedECKeyPair } from './closedGroups';
 import { getMessageBySenderAndTimestamp } from '../data/data';
+// import { getMessageBySenderAndTimestamp, markMessageAsDeleted } from '../data/data';
 import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export async function handleContentMessage(envelope: EnvelopePlus, messageHash?: string) {
@@ -539,8 +540,19 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
 
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
 
-  if (messageHash) {
+  if (messageHash && messageToDelete) {
+    console.warn(`Received message unsend request. Deleting on network: ${messageHash}`);
     networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+    // mark as deleted locally
+    if (messageToDelete.isUnread()) {
+      console.warn( "Message to be unsent / deleted is unread. Marking as read");
+      messageToDelete.markRead(Date.now()) // TODO: check if this is alright
+    }
+    // markMessageAsDeleted(messageToDelete.id);
+    messageToDelete.set({
+      isDeleted: 1
+    })
+    messageToDelete.commit();
   }
 }
 

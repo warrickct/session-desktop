@@ -483,30 +483,18 @@ export async function deleteMessagesById(
         return;
       }
     } else {
-      if (true) {
-        const msgHashes: Array<string> = [];
+      // send request to conversation recipients to delete message on their swarms
+      selectedMessages.map(async (selectedMessage) => {
+        await conversationModel.unsendMessage(selectedMessage);
+        console.warn("Sent unsend message successfully.");
+      })
 
-        for (let index = 0; index < selectedMessages.length; index++) {
-          const msgHash = selectedMessages[index].getMessageModelProps().propsForMessage.messageHash;
-          if (msgHash !== null) {
-            msgHashes.push(msgHash);
-          }
-        }
-
-        // TODO: test - sending unsend request to session recipient.
-
-        selectedMessages.map(async (selectedMessage) => {
-          await conversationModel.unsendMessage(selectedMessage);
-          console.warn("Sent unsend message successfully.");
-        })
-
-        if (msgHashes.length > 0) {
-          console.warn("Making Snode delete message request for message hashes:", msgHashes);
-          await networkDeleteMessages(msgHashes);
-        }
+      // delete on message authors own swarm
+      const msgHashes = _.compact(selectedMessages.map(m => m.get('messageHash')));
+      if (msgHashes.length > 0) {
+        console.warn("Making Snode delete message request for message hashes:", msgHashes);
+        await networkDeleteMessages(msgHashes);
       }
-
-
       toDeleteLocallyIds = selectedMessages.map(m => m.id as string);
     }
 

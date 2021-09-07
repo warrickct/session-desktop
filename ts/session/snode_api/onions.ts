@@ -393,7 +393,6 @@ export async function decodeOnionResult(symmetricKey: ArrayBuffer, ciphertext: s
     parsedCiphertext = jsonRes.result;
   } catch (e) {
     // just try to get a json object from what is inside (for PN requests), if it fails, continue ()
-    console.error('Failed to decode onion result: ', e);
   }
   const ciphertextBuffer = await window.callWorker('fromBase64ToArrayBuffer', parsedCiphertext);
 
@@ -706,7 +705,9 @@ export const sendOnionRequestHandlingSnodeEject = async ({
     test,
   });
 
-  console.warn({ processed });
+  if (test === 'delete') {
+    console.warn({ processed });
+  }
   return processed;
 };
 

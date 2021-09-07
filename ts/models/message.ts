@@ -526,7 +526,8 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       expirationTimestamp,
       isExpired: this.isExpired(),
       isTrustedForAttachmentDownload,
-      messageHash: this.get('messageHash') || null
+      messageHash: this.get('messageHash') || null,
+      isDeleted: this.get('isDeleted')
     };
 
     return props;
