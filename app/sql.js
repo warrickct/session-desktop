@@ -2300,7 +2300,8 @@ function saveUnprocessed(data) {
       version,
       attempts,
       envelope,
-      senderIdentity
+      senderIdentity,
+      messageHash
     ) values (
       $id,
       $timestamp,
@@ -2308,6 +2309,7 @@ function saveUnprocessed(data) {
       $attempts,
       $envelope,
       $senderIdentity
+      $messageHash
     );`
     )
     .run({
@@ -2317,6 +2319,7 @@ function saveUnprocessed(data) {
       attempts,
       envelope,
       senderIdentity,
+      messageHash
     });
 
   return id;
