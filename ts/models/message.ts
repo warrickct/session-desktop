@@ -936,6 +936,14 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     return null;
   }
 
+  public async updateMessageHash(messageHash: string) {
+    this.set({
+      messageHash
+    });
+
+    this.commit();
+  }
+
   public async sendSyncMessageOnly(dataMessage: DataMessage) {
     const now = Date.now();
     this.set({

@@ -727,12 +727,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       return;
     }
 
-    // handling is private
-    if (!this.isPrivate()) {
-      console.log({ isPrivate: this.isPrivate });
-      return;
-    }
-
     // handling no destination
     const destinationId = this.id;
     if (!destinationId) {
@@ -750,7 +744,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const author = message.get('source');
 
     const timestamp = message.getPropsForMessage().timestamp;
-    console.log({message});
+    console.log({ message });
     if (!timestamp) {
       console.warn('cannot find timestamp - aborting unsend request');
       return;
@@ -761,17 +755,35 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       author
     }
 
-    let msgFromDb = await getMessageBySenderAndTimestamp({source: author, timestamp});
-    console.log({msgFromDb});
+    let msgFromDb = await getMessageBySenderAndTimestamp({ source: author, timestamp });
+    console.log({ msgFromDb });
 
     const unsendMessage = new UnsendMessage(unsendParams);
+    console.warn({unsendMessage});
+    const testVisibleMessage = new OpenGroupVisibleMessage(unsendParams)
+    console.warn({testVisibleMessage});
     //#endregion
 
     //#region sending
     // if 1-1 session === === === === === === === === === ===
-    getMessageQueue()
-      .sendToPubKey(new PubKey(destinationId), unsendMessage)
-      .catch(window?.log?.error);
+
+    if (!this.isMe() && !this.isGroup()) {
+      console.warn("UnsendMesage:: 1-1 conversation");
+      getMessageQueue()
+        .sendToPubKey(new PubKey(destinationId), unsendMessage)
+        .catch(window?.log?.error);
+    }
+
+    // if (this.isOpenGroupV2()) {
+      
+    // }
+
+    if (this.isClosedGroup() && this.id) {
+      console.warn("UnsendMessage:: Sending unsend request to closed group");
+      getMessageQueue()
+        .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
+        .catch(window?.log?.error)
+    }
 
     // closed group ============================== 
     // const messageParams: ClosedGroupNewMessageParams = { groupId: groupPublicKey,
@@ -782,13 +794,15 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //   timestamp: Date.now(),
     //   identifier: dbMessage.id,
     //   expireTimer: existingExpireTimer,
+
+
     // };
     // const message = new ClosedGroupNewMessage(messageParams);
     // return getMessageQueue().sendToPubKeyNonDurably(PubKey.cast(m), message);
 
     // if (this.isClosedGroup()) {
     //   this.attrib.forEach(element => {
-        
+
     //   });
     // }
 

@@ -1210,14 +1210,19 @@ function updateToLokiSchemaVersion16(currentVersion, db) {
       ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN serverHash TEXT;
       ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN isDeleted INTEGER;
 
-    CREATE INDEX messages_serverHash ON ${MESSAGES_TABLE} (
-      serverHash
+      CREATE INDEX messages_serverHash ON ${MESSAGES_TABLE} (
+        serverHash
 
-    ) WHERE serverHash IS NOT NULL;
+      ) WHERE serverHash IS NOT NULL;
 
-    CREATE INDEX messages_isDeleted ON ${MESSAGES_TABLE} (
-      isDeleted
-    ) WHERE isDeleted IS NOT NULL;
+      CREATE INDEX messages_isDeleted ON ${MESSAGES_TABLE} (
+        isDeleted
+      ) WHERE isDeleted IS NOT NULL;
+
+      ALTER TABLE unprocessed ADD serverHash TEXT;
+      CREATE INDEX messages_messageHash ON unprocessed (
+        serverHash
+      ) WHERE serverHash IS NOT NULL;
     `);
 
     writeLokiSchemaVersion(targetVersion, db);
@@ -2301,14 +2306,14 @@ function saveUnprocessed(data) {
       attempts,
       envelope,
       senderIdentity,
-      messageHash
+      serverHash
     ) values (
       $id,
       $timestamp,
       $version,
       $attempts,
       $envelope,
-      $senderIdentity
+      $senderIdentity,
       $messageHash
     );`
     )

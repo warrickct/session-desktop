@@ -5,7 +5,7 @@ import { InView } from 'react-intersection-observer';
 import { useSelector } from 'react-redux';
 import _ from 'underscore';
 import { MessageRenderingProps, QuoteClickOptions } from '../../../models/messageType';
-import { getMessageContentSelectorProps } from '../../../state/selectors/conversations';
+import { getMessageContentSelectorProps, getMessageTextProps } from '../../../state/selectors/conversations';
 import {
   canDisplayImage,
   getGridDimensions,
@@ -56,9 +56,9 @@ function getIsShowingImage(
     const hasText = text?.length;
     return Boolean(
       displayImage &&
-        !hasText &&
-        ((isImage(attachments) && hasImage(attachments)) ||
-          (isVideo(attachments) && hasVideoScreenshot(attachments)))
+      !hasText &&
+      ((isImage(attachments) && hasImage(attachments)) ||
+        (isVideo(attachments) && hasVideoScreenshot(attachments)))
     );
   }
 
@@ -131,6 +131,13 @@ export const MessageContent = (props: Props) => {
     attachments,
   } = contentProps;
 
+  const selectedMsg = useSelector(state => getMessageTextProps(state as any, props.messageId));
+  let isDeleted = false;
+  if (selectedMsg) {
+    // this is horrible.
+    isDeleted = selectedMsg.isDeleted === 0;
+  }
+
   const width = getWidth({ previews, attachments });
   const isShowingImage = getIsShowingImage({ attachments, imageBroken, previews, text });
   const hasText = Boolean(text);
@@ -170,15 +177,20 @@ export const MessageContent = (props: Props) => {
         triggerOnce={false}
       >
         <IsMessageVisibleContext.Provider value={isMessageVisible}>
-          <MessageQuote messageId={props.messageId} onQuoteClick={props.onQuoteClick} />
-          <MessageAttachment
-            messageId={props.messageId}
-            imageBroken={imageBroken}
-            handleImageError={handleImageError}
-          />
+          {!isDeleted &&
+            <>
+              <MessageQuote messageId={props.messageId} onQuoteClick={props.onQuoteClick} />
+              <MessageAttachment
+                messageId={props.messageId}
+                imageBroken={imageBroken}
+                handleImageError={handleImageError}
+              />
+            </>
+          }
           {hasContentAfterAttachmentAndQuote ? (
             <Flex padding="7px" container={true} flexDirection="column">
-              <MessagePreview messageId={props.messageId} handleImageError={handleImageError} />
+              {!isDeleted &&
+                <MessagePreview messageId={props.messageId} handleImageError={handleImageError} />}
               <MessageText messageId={props.messageId} />
             </Flex>
           ) : null}
