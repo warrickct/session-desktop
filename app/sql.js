@@ -1208,7 +1208,7 @@ function updateToLokiSchemaVersion16(currentVersion, db) {
   db.transaction(() => {
     db.exec(`
       ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN serverHash TEXT;
-      ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN isDeleted INTEGER;
+      ALTER TABLE ${MESSAGES_TABLE} ADD COLUMN isDeleted BOOLEAN;
 
       CREATE INDEX messages_serverHash ON ${MESSAGES_TABLE} (
         serverHash

@@ -133,9 +133,8 @@ export const MessageContent = (props: Props) => {
 
   const selectedMsg = useSelector(state => getMessageTextProps(state as any, props.messageId));
   let isDeleted = false;
-  if (selectedMsg) {
-    // this is horrible.
-    isDeleted = selectedMsg.isDeleted === 0;
+  if (selectedMsg && selectedMsg.isDeleted !== undefined) {
+    isDeleted = selectedMsg.isDeleted;
   }
 
   const width = getWidth({ previews, attachments });

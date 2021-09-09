@@ -153,13 +153,8 @@ export const MessageContextMenu = (props: Props) => {
   }, [messageId]);
 
   const onDelete = useCallback(() => {
-    void deleteMessagesById([messageId], convoId, false);
+    void deleteMessagesById([messageId], convoId, true);
   }, [convoId, messageId]);
-
-  const onUnsend = useCallback(() => {
-    void deleteMessagesById([messageId], convoId, false);
-    // void unsendMessage(messageId)
-  }, [messageId, convoId])
 
   return (
     <Menu
@@ -172,7 +167,6 @@ export const MessageContextMenu = (props: Props) => {
         <Item onClick={saveAttachment}>{window.i18n('downloadAttachment')}</Item>
       ) : null}
 
-      <Item onClick={onUnsend}>Unsend message</Item>
       <Item onClick={copyText}>{window.i18n('copyMessage')}</Item>
       <Item onClick={onReply}>{window.i18n('replyToMessage')}</Item>
       <Item onClick={onShowDetail}>{window.i18n('moreInformation')}</Item>

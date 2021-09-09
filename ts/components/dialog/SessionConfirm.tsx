@@ -13,8 +13,18 @@ export interface SessionConfirmDialogProps {
   title?: string;
   onOk?: any;
   onClose?: any;
+  closeAfterInput?: boolean
+
+  /**
+   * function to run on ok click. Closes modal after execution by default
+   */
   onClickOk?: () => Promise<void> | void;
+
   onClickClose?: () => any;
+
+  /**
+   * function to run on close click. Closes modal after execution by default
+   */
   onClickCancel?: () => any;
   okText?: string;
   cancelText?: string;
@@ -25,6 +35,7 @@ export interface SessionConfirmDialogProps {
   iconSize?: SessionIconSize;
   shouldShowConfirm?: boolean | undefined;
   showExitIcon?: boolean | undefined;
+
 }
 
 export const SessionConfirm = (props: SessionConfirmDialogProps) => {
@@ -42,6 +53,7 @@ export const SessionConfirm = (props: SessionConfirmDialogProps) => {
     shouldShowConfirm,
     onClickCancel,
     showExitIcon,
+    closeAfterInput = true
   } = props;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +76,9 @@ export const SessionConfirm = (props: SessionConfirmDialogProps) => {
       }
     }
 
-    window.inboxStore?.dispatch(updateConfirmModal(null));
+    if (closeAfterInput) {
+      window.inboxStore?.dispatch(updateConfirmModal(null));
+    }
   };
 
   if (shouldShowConfirm && !shouldShowConfirm) {

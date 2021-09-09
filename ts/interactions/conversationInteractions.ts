@@ -441,7 +441,7 @@ export async function deleteMessagesById(
   conversationId: string,
   askUserForConfirmation: boolean
 ) {
-  const conversationModel = getConversationController().getOrThrow(conversationId);
+  const conversation = getConversationController().getOrThrow(conversationId);
   const selectedMessages = _.compact(
     await Promise.all(messageIds.map(m => getMessageById(m, false)))
   );
@@ -451,19 +451,20 @@ export async function deleteMessagesById(
   // In future, we may be able to unsend private messages also
   // isServerDeletable also defined in ConversationHeader.tsx for
   // future reference
-  const isServerDeletable = conversationModel.isPublic();
+  const isServerDeletable = conversation.isPublic();
 
   const doDelete = async () => {
     let toDeleteLocallyIds: Array<string>;
 
     if (isServerDeletable) {
+      // Open group deletion
       // Get our Moderator status
       const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
       if (!ourDevicePubkey) {
         return;
       }
 
-      const isAdmin = conversationModel.isAdmin(ourDevicePubkey);
+      const isAdmin = conversation.isAdmin(ourDevicePubkey);
       // const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
       const isAllOurs = selectedMessages.every(message => {
         ourDevicePubkey === message.getSource();
@@ -477,36 +478,15 @@ export async function deleteMessagesById(
         return;
       }
 
-      toDeleteLocallyIds = await deleteOpenGroupMessages(selectedMessages, conversationModel);
+      toDeleteLocallyIds = await deleteOpenGroupMessages(selectedMessages, conversation);
       if (toDeleteLocallyIds.length === 0) {
         // Message failed to delete from server, show error?
         return;
       }
     } else {
-      // send request to conversation recipients to delete message on their swarms
-      selectedMessages.map(async (selectedMessage) => {
-        await conversationModel.unsendMessage(selectedMessage);
-        console.warn("Sent unsend message successfully.");
-      })
-
-      // delete on message authors own swarm
-      const msgHashes = _.compact(selectedMessages.map(m => m.get('messageHash')));
-      if (msgHashes.length > 0) {
-        console.warn("Making Snode delete message request for message hashes:", msgHashes);
-        await networkDeleteMessages(msgHashes);
-      }
-      toDeleteLocallyIds = selectedMessages.map(m => m.id as string);
+      await conversation.unsendMessages(selectedMessages);
     }
 
-    await Promise.all(
-      toDeleteLocallyIds.map(async msgId => {
-        await conversationModel.removeMessage(msgId);
-      })
-    );
-
-    // Update view and trigger update
-    window.inboxStore?.dispatch(resetSelectedMessageIds());
-    ToastUtils.pushDeleted();
   };
 
   if (askUserForConfirmation) {
@@ -529,30 +509,86 @@ export async function deleteMessagesById(
 
     const okText = window.i18n(isServerDeletable ? 'deleteForEveryone' : 'delete');
 
-    const onClickClose = () => {
+    //#region confirmation for deletion of messages
+    const showDeletionTypeModal = () => {
       window.inboxStore?.dispatch(updateConfirmModal(null));
-    };
-
-    const warningMessage = (() => {
-      if (isServerDeletable) {
-        return moreThanOne
-          ? window.i18n('deleteMultiplePublicWarning')
-          : window.i18n('deletePublicWarning');
-      }
-      return moreThanOne ? window.i18n('deleteMultipleWarning') : window.i18n('deleteWarning');
-    })();
+      window.inboxStore?.dispatch(
+        updateConfirmModal({
+          // TODO: i18n
+          title: 'Deletion Type',
+          // message: 'Select a deletion type',
+          okText: 'Delete for everyone',
+          okTheme: SessionButtonColor.Danger,
+          onClickOk: async () => {
+            deleteForAll(selectedMessages)
+          },
+          cancelText: 'Delete just for me',
+          onClickCancel: async () => {
+            deleteForCurrentUser(selectedMessages)
+          }
+        })
+      );
+      return;
+    }
     window.inboxStore?.dispatch(
       updateConfirmModal({
         title,
-        message: warningMessage,
+        // TODO: i18n
+        message: 'Delete these message(s)?',
         okText,
         okTheme: SessionButtonColor.Danger,
-        onClickOk: doDelete,
-        onClickClose,
+        onClickOk: showDeletionTypeModal,
+        closeAfterInput: false
       })
     );
+    //#endregion
+
   } else {
     void doDelete();
+  }
+
+  /**
+   * Deletes messages for everyone in a 1-1 or closed group conversation
+   * @param selectedMessages Messages to delete 
+   */
+  async function deleteForAll(selectedMessages: MessageModel[]) {
+    console.warn('Deleting messages for all users in this conversation');
+    selectedMessages.map(async (selectedMessage) => {
+      await conversation.unsendMessage(selectedMessage);
+      console.warn("Sent unsend message successfully.");
+    });
+
+    // delete on message authors own swarm
+    const msgHashes = _.compact(selectedMessages.map(m => m.get('messageHash')));
+    if (msgHashes.length > 0) {
+      // TODO: Create confirmation modal (delete local vs deleteForAll)
+      // if selected deleteForAll and fail, cancel entire deletion
+      console.warn("Making Snode delete message request for message hashes:", msgHashes);
+      await networkDeleteMessages(msgHashes);
+    }
+  }
+
+  /**
+   * 
+   * @param toDeleteLocallyIds Messages to delete for just this user. Still sends an unsend message to sync
+   *  with other devices
+   * @returns 
+   */
+  async function deleteForCurrentUser(selectedMessages: MessageModel[]) {
+    console.warn('Deleting messages just for this user');
+    const msgIdsToDelete = selectedMessages.map(m => m.id as string);
+    const msgHashesToDelete = _.compact(selectedMessages.map(m => m.get('messageHash')));
+    await networkDeleteMessages(msgHashesToDelete);
+    await Promise.all(
+      msgIdsToDelete.map(async (msgId) => {
+        await conversation.removeMessage(msgId);
+      })
+    );
+
+    // Update view and trigger update
+    window.inboxStore?.dispatch(resetSelectedMessageIds());
+    ToastUtils.pushDeleted();
+    return msgIdsToDelete;
   }
 }
 

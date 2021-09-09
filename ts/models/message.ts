@@ -527,7 +527,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       isExpired: this.isExpired(),
       isTrustedForAttachmentDownload,
       messageHash: this.get('messageHash') || null,
-      isDeleted: this.get('isDeleted')
+      isDeleted: this.get('isDeleted') || false
     };
 
     return props;
@@ -590,6 +590,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       };
     });
   }
+
 
   public getPropsForQuote(_options: any = {}) {
     const quote = this.get('quote');
@@ -778,6 +779,15 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       preview,
       quote,
     };
+  }
+
+  /**
+   * Marks the message as deleted to show the author has deleted this message for everyone.
+   * Sets isDeleted property to true.
+   */
+  public async markAsDeleted() {
+    this.set({ isDeleted: true})
+    await this.commit();
   }
 
   // One caller today: event handler for the 'Retry Send' entry on right click of a failed send message

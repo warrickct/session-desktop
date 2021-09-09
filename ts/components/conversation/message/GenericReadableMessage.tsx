@@ -101,8 +101,6 @@ export const GenericReadableMessage = (props: Props) => {
     getGenericReadableMessageSelectorProps(state as any, props.messageId)
   );
 
-  console.warn({msgProps});
-
   const expiringProps: ExpiringProps = {
     convoId: msgProps?.convoId,
     expirationLength: msgProps?.expirationLength,

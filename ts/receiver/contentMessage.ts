@@ -513,24 +513,7 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   }
   //#endregion
 
-  // TODO: don't know if I actually need the conversation controller.
-
-  // 1. lookup the message using the timestamp and author (and maybe the convo?)
-  // 1.1 obtain the hash from the message 
-  // 2. delete from swarm using the SnodeRPC delete message request. (ensure it works completely)
-
-  // 3. delete the message from user database i.e. delete locally
-
-  /**
-   * Pseudocode
-   * const hashToDelete = messageDatabaseLookup(author, timestamp).hash;
-   * 
-   * SnodeAPI.deleteMessage(hashToDelete);
-   * 
-   * deleteMessageFromDb() - maybe this is given to deleteMessage as a success callback? 
-   * 
-   */
-
+  //#region removal from current device's swarm
   console.warn("Handling unsend message");
 
   const messageToDelete = await getMessageBySenderAndTimestamp({
@@ -539,21 +522,22 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   });
 
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
+  //#endregion
 
+  //#region deleting the message from local db
   if (messageHash && messageToDelete) {
+    // delete on this device's swarm.
     console.warn(`Received message unsend request. Deleting on network: ${messageHash}`);
     networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+
     // mark as deleted locally
     if (messageToDelete.isUnread()) {
       console.warn( "Message to be unsent / deleted is unread. Marking as read");
       messageToDelete.markRead(Date.now()) // TODO: check if this is alright
     }
-    // markMessageAsDeleted(messageToDelete.id);
-    messageToDelete.set({
-      isDeleted: 1
-    })
-    messageToDelete.commit();
+    messageToDelete.markAsDeleted();
   }
+  //#endregion
 }
 
 /**

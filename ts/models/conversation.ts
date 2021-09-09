@@ -714,29 +714,36 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
+  public async unsendMessages(messages: MessageModel[]) {
+    const results = await Promise.all(messages.map(message => {
+      return this.unsendMessage(message);
+    }))
+    return _.every(results);
+  }
+
   /**
    * Creates an unsend request using protobuf and adds to messageQueue.
    * @param message Message to unsend
    * @returns 
    */
-  public async unsendMessage(message: MessageModel) {
+  public async unsendMessage(message: MessageModel): Promise<boolean> {
 
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
       console.warn("Message has no hash - aborting unsend message");
-      return;
+      return false;
     }
 
     // handling no destination
     const destinationId = this.id;
     if (!destinationId) {
-      return;
+      return false;
     }
 
     const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
     if (destinationId && ownPrimaryDevicePubkey === destinationId) {
       // note to self
-      return;
+      return false;
     }
     //#endregion
 
@@ -747,7 +754,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     console.log({ message });
     if (!timestamp) {
       console.warn('cannot find timestamp - aborting unsend request');
-      return;
+      return false;
     }
 
     const unsendParams = {
@@ -759,14 +766,13 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     console.log({ msgFromDb });
 
     const unsendMessage = new UnsendMessage(unsendParams);
-    console.warn({unsendMessage});
+    console.warn({ unsendMessage });
     const testVisibleMessage = new OpenGroupVisibleMessage(unsendParams)
-    console.warn({testVisibleMessage});
+    console.warn({ testVisibleMessage });
     //#endregion
 
     //#region sending
-    // if 1-1 session === === === === === === === === === ===
-
+    // 1-1 Session
     if (!this.isMe() && !this.isGroup()) {
       console.warn("UnsendMesage:: 1-1 conversation");
       getMessageQueue()
@@ -774,10 +780,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
         .catch(window?.log?.error);
     }
 
-    // if (this.isOpenGroupV2()) {
-      
-    // }
-
+    // closed groups
     if (this.isClosedGroup() && this.id) {
       console.warn("UnsendMessage:: Sending unsend request to closed group");
       getMessageQueue()
@@ -785,31 +788,12 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
         .catch(window?.log?.error)
     }
 
-    // closed group ============================== 
-    // const messageParams: ClosedGroupNewMessageParams = { groupId: groupPublicKey,
-    //   name: groupName,
-    //   members: listOfMembers,
-    //   admins,
-    //   keypair: encryptionKeyPair,
-    //   timestamp: Date.now(),
-    //   identifier: dbMessage.id,
-    //   expireTimer: existingExpireTimer,
+    // open groups
+    if (this.isOpenGroupV2()) {
+      console.warn('Conversation is open group. Skipping unsend request.');
+    }
 
-
-    // };
-    // const message = new ClosedGroupNewMessage(messageParams);
-    // return getMessageQueue().sendToPubKeyNonDurably(PubKey.cast(m), message);
-
-    // if (this.isClosedGroup()) {
-    //   this.attrib.forEach(element => {
-
-    //   });
-    // }
-
-
-    // OR
-    // getMessageQueue().sendToGroup(new PubKey(destinationId), unsendMessage)
-
+    return true;
 
     // if open group ========================================
     // const openGroupMessageParams = {
