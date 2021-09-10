@@ -26,8 +26,6 @@ export const Message = (props: Props) => {
   }
 
   if (msgProps?.isDeleted && msgProps.direction === 'outgoing') {
-    console.warn({msgProps});
-    console.warn('not rendering message as its outgoing and deleted');
     // TODO: this is still getting returned as a number for some reason.
     // if (msgProps?.isDeleted === 1) {
     //   console.warn({msgProps});

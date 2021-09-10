@@ -729,9 +729,8 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
   public async unsendMessage(message: MessageModel, toOwnDevice: boolean = false): Promise<boolean> {
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
-
       console.error(`Message ${message.get('id')} has no hash:: `, message);
-      console.error(`message hash other way: ${message.get('messageHash')}`);
+      console.error(`message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`);
       return false;
     }
     const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
