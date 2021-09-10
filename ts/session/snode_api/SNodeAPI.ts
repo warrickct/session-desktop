@@ -546,7 +546,6 @@ export async function storeOnNode(targetNode: Snode, params: SendParams, message
         const message = await getMessageById(messageId);
         if (message) {
           await message.updateMessageHash(messageHash);
-          await message.commit();
           console.warn(`updated message ${message.get('id')} with hash: ${message.get('messageHash')}`);
         }
       }

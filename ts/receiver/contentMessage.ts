@@ -534,7 +534,7 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
       console.warn( "Message to be unsent / deleted is unread. Marking as read");
       messageToDelete.markRead(Date.now()) // TODO: check if this is alright
     }
-    messageToDelete.markAsDeleted();
+    await messageToDelete.markAsDeleted();
   }
   //#endregion
 }
