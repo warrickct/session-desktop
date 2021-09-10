@@ -558,9 +558,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: fileName || null,
               thumbnail: thumbnail
                 ? {
-                  ...(await loadAttachmentData(thumbnail)),
-                  objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
-                }
+                    ...(await loadAttachmentData(thumbnail)),
+                    objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
+                  }
                 : null,
             };
           })
@@ -583,9 +583,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: null,
               thumbnail: image
                 ? {
-                  ...(await loadAttachmentData(image)),
-                  objectUrl: getAbsoluteAttachmentPath(image.path),
-                }
+                    ...(await loadAttachmentData(image)),
+                    objectUrl: getAbsoluteAttachmentPath(image.path),
+                  }
                 : null,
             };
           })
@@ -715,25 +715,29 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
   }
 
   public async unsendMessages(messages: MessageModel[], toOwnDevice: boolean = false) {
-    const results = await Promise.all(messages.map(message => {
-      return this.unsendMessage(message, toOwnDevice);
-    }))
+    const results = await Promise.all(
+      messages.map(message => {
+        return this.unsendMessage(message, toOwnDevice);
+      })
+    );
     return _.every(results);
   }
 
   /**
    * Creates an unsend request using protobuf and adds to messageQueue.
    * @param message Message to unsend
-   * @returns 
    */
-  public async unsendMessage(message: MessageModel, toOwnDevice: boolean = false): Promise<boolean> {
-    //#region checking for early exit conditions
-    if (!message.getPropsForMessage().messageHash) {
-      console.error({changed: message.changedAttributes()});
-      message.commit();
+  public async unsendMessage(
+    message: MessageModel,
+    toOwnDevice: boolean = false
+  ): Promise<boolean> {
+    if (!message.get('messageHash')) {
+      debugger;
+
       console.error(`Message ${message.get('id')} has no hash:: `, message);
-      console.error(`message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`);
-      console.error({usingGet: message.get('messageHash')})
+      console.error(
+        `message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`
+      );
       return false;
     }
     const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
@@ -757,8 +761,8 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     const unsendParams = {
       timestamp,
-      author
-    }
+      author,
+    };
 
     let msgFromDb = await getMessageBySenderAndTimestamp({ source: author, timestamp });
     console.log({ msgFromDb });
@@ -770,7 +774,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //#region sending
     // 1-1 Session
     if (!this.isMe() && !this.isGroup()) {
-      console.warn("UnsendMesage:: 1-1 conversation");
+      console.warn('UnsendMesage:: 1-1 conversation');
       getMessageQueue()
         .sendToPubKey(new PubKey(destinationId), unsendMessage)
         .catch(window?.log?.error);
@@ -778,10 +782,10 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     // closed groups
     if (this.isClosedGroup() && this.id) {
-      console.warn("UnsendMessage:: Sending unsend request to closed group");
+      console.warn('UnsendMessage:: Sending unsend request to closed group');
       getMessageQueue()
         .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
-        .catch(window?.log?.error)
+        .catch(window?.log?.error);
     }
 
     // open groups
@@ -793,7 +797,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     //#endregion
   }
-
 
   public async sendMessage(msg: SendMessageType) {
     const { attachments, body, groupInvitation, preview, quote } = msg;

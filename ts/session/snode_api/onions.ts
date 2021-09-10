@@ -499,8 +499,6 @@ export async function processOnionResponse({
       associatedWith,
     });
 
-    console.log({ response: jsonRes });
-
     return jsonRes as SnodeResponse;
   } catch (e) {
     window?.log?.error(`[path] lokiRpc::processingOnionResponse - Rethrowing error ${e.message}'`);

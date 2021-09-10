@@ -527,7 +527,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       isExpired: this.isExpired(),
       isTrustedForAttachmentDownload,
       messageHash: this.get('messageHash') || null,
-      isDeleted: this.get('isDeleted') || false
+      isDeleted: this.get('isDeleted') || false,
     };
 
     return props;
@@ -590,7 +590,6 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       };
     });
   }
-
 
   public getPropsForQuote(_options: any = {}) {
     const quote = this.get('quote');
@@ -786,7 +785,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
    * Sets isDeleted property to true.
    */
   public async markAsDeleted() {
-    this.set({ isDeleted: true})
+    this.set({ isDeleted: true });
     await this.commit();
   }
 
@@ -947,9 +946,12 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
   }
 
   public async updateMessageHash(messageHash: string) {
-    console.warn("Store on snode response has: ", messageHash);
+    if (!messageHash) {
+      debugger;
+    }
+    console.warn('Store on snode response has: ', messageHash);
     this.set({
-      messageHash
+      messageHash,
     });
 
     await this.commit();
@@ -1038,7 +1040,10 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     perfStart(`messageCommit-${this.attributes.id}`);
-    console.log({saveMsgAttribs: this.attributes});
+    if (this.attributes.messageHash === undefined) {
+      debugger;
+    }
+    console.warn(' saving message :', this.attributes.id, '   hash:', this.attributes.messageHash);
     const id = await saveMessage(this.attributes);
     if (triggerUIUpdate) {
       this.dispatchMessageUpdate();

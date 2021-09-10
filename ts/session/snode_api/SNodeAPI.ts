@@ -28,7 +28,7 @@ import {
   stringToUint8Array,
   toHex,
 } from '../utils/String';
-import { getMessageById, Snode } from '../../data/data';
+import { Snode } from '../../data/data';
 import { updateIsOnline } from '../../state/ducks/onion';
 import { ed25519Str } from '../onions/onionPath';
 import { StringUtils, UserUtils } from '../utils';
@@ -205,8 +205,8 @@ export type SendParams = {
 /**
  * get snodes for pubkey from random snode. Uses an existing snode
  * @param pubKe
- * @param targetNode 
- * @returns 
+ * @param targetNode
+ * @returns
  */
 async function requestSnodesForPubkeyWithTargetNodeRetryable(
   pubKey: string,
@@ -529,29 +529,29 @@ export async function getSnodePoolFromSnode(targetNode: Snode): Promise<Array<Sn
   }
 }
 
-export async function storeOnNode(targetNode: Snode, params: SendParams, messageId?: string): Promise<boolean> {
+export async function storeOnNode(
+  targetNode: Snode,
+  params: SendParams,
+  messageId?: string
+): Promise<string | null> {
   try {
     // no retry here. If an issue is with the path this is handled in lokiOnionFetch
     // if there is an issue with the targetNode, we still send a few times this request to a few snodes in // already so it's handled
     const result = await snodeRpc('store', params, targetNode, params.pubKey);
 
     if (!result || result.status !== 200) {
-      return false;
+      return null;
     }
-
 
     if (messageId && result.body) {
       const messageHash = JSON.parse(result.body).hash;
+
       if (messageHash) {
-        const message = await getMessageById(messageId);
-        if (message) {
-          await message.updateMessageHash(messageHash);
-          console.warn(`updated message ${message.get('id')} with hash: ${message.get('messageHash')}`);
-        }
+        return messageHash;
       }
     }
 
-    return true;
+    return '';
   } catch (e) {
     window?.log?.warn(
       'loki_message:::store - send error:',
@@ -786,11 +786,10 @@ export const forceNetworkDeletion = async (): Promise<Array<string> | null> => {
 // tslint:disable-next-line: variable-name
 export const TEST_getMinTimeout = () => 500;
 
-
 /**
  * Locally deletes message and deletes message on the network (all nodes that contain the message)
- * @param messageId 
- * @returns 
+ * @param messageId
+ * @returns
  */
 export const networkDeleteMessages = async (hashes: string[]): Promise<any> => {
   const sodium = await getSodium();
@@ -896,7 +895,9 @@ export const networkDeleteMessages = async (hashes: string[]): Promise<any> => {
                   const responseHashes = snodeJson.deleted as Array<string>;
                   const signatureSnode = snodeJson.signature as string;
                   // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
-                  const dataToVerify = `${userX25519PublicKey}${hashes.join('')}${responseHashes.join('')}`;
+                  const dataToVerify = `${userX25519PublicKey}${hashes.join(
+                    ''
+                  )}${responseHashes.join('')}`;
                   const dataToVerifyUtf8 = StringUtils.encode(dataToVerify, 'utf8');
                   const isValid = sodium.crypto_sign_verify_detached(
                     fromBase64ToArray(signatureSnode),
@@ -947,5 +948,4 @@ export const networkDeleteMessages = async (hashes: string[]): Promise<any> => {
     window?.log?.warn('failed to delete message on network:', e);
     return null;
   }
-
-}
+};
