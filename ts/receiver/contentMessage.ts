@@ -513,7 +513,6 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   }
   //#endregion
 
-  //#region removal from current device's swarm
   console.warn("Handling unsend message");
 
   const messageToDelete = await getMessageBySenderAndTimestamp({
@@ -522,13 +521,13 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   });
 
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
-  //#endregion
 
   //#region deleting the message from local db
   if (messageHash && messageToDelete) {
     // delete on this device's swarm.
     console.warn(`Received message unsend request. Deleting on network: ${messageHash}`);
-    networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+    let networkDeleteResults = await networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
+    console.warn({networkDeleteResults});
 
     // mark as deleted locally
     if (messageToDelete.isUnread()) {

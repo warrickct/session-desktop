@@ -1212,7 +1212,6 @@ function updateToLokiSchemaVersion16(currentVersion, db) {
 
       CREATE INDEX messages_serverHash ON ${MESSAGES_TABLE} (
         serverHash
-
       ) WHERE serverHash IS NOT NULL;
 
       CREATE INDEX messages_isDeleted ON ${MESSAGES_TABLE} (
@@ -1983,9 +1982,9 @@ function cleanSeenMessages() {
 
 function markMessageAsDeleted(id) {
   try {
-    globalInstance .prepare(
-        `UPDATE ${MESSAGES_TABLE} SET isDeleted = true,  WHERE id = $id);`
-      )
+    globalInstance.prepare(
+      `UPDATE ${MESSAGES_TABLE} SET isDeleted = true,  WHERE id = $id);`
+    )
       .run({ id });
   } catch (e) {
     console.warn(`Failed to mark message as deleted ${e}`);

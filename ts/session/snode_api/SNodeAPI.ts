@@ -543,12 +543,11 @@ export async function storeOnNode(targetNode: Snode, params: SendParams, message
     if (messageId && result.body) {
       const messageHash = JSON.parse(result.body).hash;
       if (messageHash) {
-        console.warn('Able to store message with hash: ', messageHash);
         const message = await getMessageById(messageId);
         if (message) {
-          console.warn('Found message to update hash for: ', message);
-          message.updateMessageHash(messageHash);
-          console.warn('message with updated hash: ', message);
+          await message.updateMessageHash(messageHash);
+          await message.commit();
+          console.warn(`updated message ${message.get('id')} with hash: ${message.get('messageHash')}`);
         }
       }
     }

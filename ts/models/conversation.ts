@@ -714,9 +714,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
-  public async unsendMessages(messages: MessageModel[]) {
+  public async unsendMessages(messages: MessageModel[], toOwnDevice: boolean = false) {
     const results = await Promise.all(messages.map(message => {
-      return this.unsendMessage(message);
+      return this.unsendMessage(message, toOwnDevice);
     }))
     return _.every(results);
   }
@@ -726,23 +726,19 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
    * @param message Message to unsend
    * @returns 
    */
-  public async unsendMessage(message: MessageModel): Promise<boolean> {
-
+  public async unsendMessage(message: MessageModel, toOwnDevice: boolean = false): Promise<boolean> {
     //#region checking for early exit conditions
     if (!message.getPropsForMessage().messageHash) {
-      console.warn("Message has no hash - aborting unsend message");
+
+      console.error(`Message ${message.get('id')} has no hash:: `, message);
+      console.error(`message hash other way: ${message.get('messageHash')}`);
       return false;
     }
+    const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
 
     // handling no destination
-    const destinationId = this.id;
+    const destinationId = toOwnDevice ? ownPrimaryDevicePubkey : this.id;
     if (!destinationId) {
-      return false;
-    }
-
-    const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
-    if (destinationId && ownPrimaryDevicePubkey === destinationId) {
-      // note to self
       return false;
     }
     //#endregion
@@ -753,7 +749,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const timestamp = message.getPropsForMessage().timestamp;
     console.log({ message });
     if (!timestamp) {
-      console.warn('cannot find timestamp - aborting unsend request');
+      console.error('cannot find timestamp - aborting unsend request');
       return false;
     }
 
@@ -767,8 +763,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     const unsendMessage = new UnsendMessage(unsendParams);
     console.warn({ unsendMessage });
-    const testVisibleMessage = new OpenGroupVisibleMessage(unsendParams)
-    console.warn({ testVisibleMessage });
     //#endregion
 
     //#region sending
@@ -794,21 +788,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
 
     return true;
-
-    // if open group ========================================
-    // const openGroupMessageParams = {
-    //   identifier: this.id,
-    //   timestamp: Date.now(),
-    //   lokiProfile: UserUtils.getOurProfile(),
-    //   unsendMessage
-    // }
-    // getMessageQueue().sendToOpenGroupV2()
-
-    // TODO:
-    /**
-     * Need to figure out the most correct way to send to a closed group.
-     * 
-     */
 
     //#endregion
   }

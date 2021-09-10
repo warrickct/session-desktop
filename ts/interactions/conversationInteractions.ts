@@ -43,7 +43,6 @@ import { FSv2 } from '../fileserver';
 import { fromHexToArray, toHex } from '../session/utils/String';
 import { SessionButtonColor } from '../components/session/SessionButton';
 import { perfEnd, perfStart } from '../session/utils/Performance';
-import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export const getCompleteUrlForV2ConvoId = async (convoId: string) => {
   if (convoId.match(openGroupV2ConversationIdRegex)) {
@@ -453,23 +452,18 @@ export async function deleteMessagesById(
   // future reference
   const isServerDeletable = conversation.isPublic();
 
-  const doDelete = async () => {
+  const doDelete = async (deleteForEveryone: boolean = true) => {
     let toDeleteLocallyIds: Array<string>;
 
-    if (isServerDeletable) {
-      // Open group deletion
-      // Get our Moderator status
       const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
       if (!ourDevicePubkey) {
         return;
       }
-
+    const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
+    if (isServerDeletable) {
+      //#region open group v2 deletion
+      // Get our Moderator status
       const isAdmin = conversation.isAdmin(ourDevicePubkey);
-      // const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
-      const isAllOurs = selectedMessages.every(message => {
-        ourDevicePubkey === message.getSource();
-        console.log({ source: ourDevicePubkey });
-      });
 
       if (!isAllOurs && !isAdmin) {
         ToastUtils.pushMessageDeleteForbidden();
@@ -483,8 +477,25 @@ export async function deleteMessagesById(
         // Message failed to delete from server, show error?
         return;
       }
+      // successful deletion
+      ToastUtils.pushDeleted();
+      window.inboxStore?.dispatch(resetSelectedMessageIds());
+      //#endregion
     } else {
-      await conversation.unsendMessages(selectedMessages);
+      //#region deletion for 1-1 and closed groups
+      if (!isAllOurs) {
+        ToastUtils.pushMessageDeleteForbidden();
+
+        window.inboxStore?.dispatch(resetSelectedMessageIds());
+        return;
+      }
+
+      if (deleteForEveryone) {
+        deleteForAll(selectedMessages);
+      } else {
+        deleteForCurrentUser(selectedMessages);
+      }
+      //#endregion
     }
 
   };
@@ -514,30 +525,37 @@ export async function deleteMessagesById(
       window.inboxStore?.dispatch(updateConfirmModal(null));
       window.inboxStore?.dispatch(
         updateConfirmModal({
-          // TODO: i18n
-          title: 'Deletion Type',
-          // message: 'Select a deletion type',
-          okText: 'Delete for everyone',
+          title: window.i18n('deletionTypeTitle'),
+          okText: window.i18n('deleteMessageForEveryoneLowercase'),
           okTheme: SessionButtonColor.Danger,
           onClickOk: async () => {
-            deleteForAll(selectedMessages)
+            doDelete(true)
           },
-          cancelText: 'Delete just for me',
+          cancelText: window.i18n('deleteJustForMe'),
           onClickCancel: async () => {
-            deleteForCurrentUser(selectedMessages)
+            doDelete(false);
           }
         })
       );
       return;
     }
+
     window.inboxStore?.dispatch(
       updateConfirmModal({
         title,
-        // TODO: i18n
-        message: 'Delete these message(s)?',
+        message: window.i18n(moreThanOne ? 'deleteMessagesQuestion' : 'deleteMessageQuestion'),
         okText,
         okTheme: SessionButtonColor.Danger,
-        onClickOk: showDeletionTypeModal,
+        onClickOk: async () => {
+          if (isServerDeletable) {
+            await doDelete(true);
+            // explicity close modal for this case.
+            window.inboxStore?.dispatch(updateConfirmModal(null))
+          }
+          else {
+            showDeletionTypeModal();
+          }
+        },
         closeAfterInput: false
       })
     );
@@ -553,18 +571,14 @@ export async function deleteMessagesById(
    */
   async function deleteForAll(selectedMessages: MessageModel[]) {
     console.warn('Deleting messages for all users in this conversation');
-    selectedMessages.map(async (selectedMessage) => {
-      await conversation.unsendMessage(selectedMessage);
-      console.warn("Sent unsend message successfully.");
-    });
+    let result = await conversation.unsendMessages(selectedMessages);
+    // TODO: may need to specify deletion for own device as well.
 
-    // delete on message authors own swarm
-    const msgHashes = _.compact(selectedMessages.map(m => m.get('messageHash')));
-    if (msgHashes.length > 0) {
-      // TODO: Create confirmation modal (delete local vs deleteForAll)
-      // if selected deleteForAll and fail, cancel entire deletion
-      console.warn("Making Snode delete message request for message hashes:", msgHashes);
-      await networkDeleteMessages(msgHashes);
+    window.inboxStore?.dispatch(resetSelectedMessageIds());
+    if (result) {
+      ToastUtils.pushDeleted();
+    } else {
+      ToastUtils.someDeletionsFailed();
     }
   }
 
@@ -576,19 +590,16 @@ export async function deleteMessagesById(
    */
   async function deleteForCurrentUser(selectedMessages: MessageModel[]) {
     console.warn('Deleting messages just for this user');
-    const msgIdsToDelete = selectedMessages.map(m => m.id as string);
-    const msgHashesToDelete = _.compact(selectedMessages.map(m => m.get('messageHash')));
-    await networkDeleteMessages(msgHashesToDelete);
-    await Promise.all(
-      msgIdsToDelete.map(async (msgId) => {
-        await conversation.removeMessage(msgId);
-      })
-    );
-
+    let success = await conversation.unsendMessages(selectedMessages, true);
+    console.warn({ success });
+    // still need to unsend so it occurs on linked devices.
     // Update view and trigger update
     window.inboxStore?.dispatch(resetSelectedMessageIds());
-    ToastUtils.pushDeleted();
-    return msgIdsToDelete;
+    if (success) {
+      ToastUtils.pushDeleted();
+    } else {
+      ToastUtils.someDeletionsFailed();
+    }
   }
 }
 

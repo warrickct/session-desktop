@@ -190,6 +190,7 @@ export const MessageContent = (props: Props) => {
             <Flex padding="7px" container={true} flexDirection="column">
               {!isDeleted &&
                 <MessagePreview messageId={props.messageId} handleImageError={handleImageError} />}
+
               <MessageText messageId={props.messageId} />
             </Flex>
           ) : null}

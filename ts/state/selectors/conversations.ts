@@ -955,10 +955,11 @@ export const getMessageContentWithStatusesSelectorProps = createSelector(
       return undefined;
     }
 
-    const { direction } = props.propsForMessage;
+    const { direction, isDeleted } = props.propsForMessage;
 
     const msgProps: MessageContentWithStatusSelectorProps = {
       direction,
+      isDeleted
     };
 
     return msgProps;

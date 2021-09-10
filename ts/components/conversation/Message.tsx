@@ -3,8 +3,9 @@ import React from 'react';
 import _ from 'lodash';
 import uuid from 'uuid';
 import { QuoteClickOptions } from '../../models/messageType';
-import autoBind from 'auto-bind';
 import { GenericReadableMessage } from './message/GenericReadableMessage';
+import { useSelector } from 'react-redux';
+import { getGenericReadableMessageSelectorProps } from '../../state/selectors/conversations';
 
 // Same as MIN_WIDTH in ImageGrid.tsx
 export const MINIMUM_LINK_PREVIEW_IMAGE_WIDTH = 200;
@@ -15,29 +16,31 @@ type Props = {
   onQuoteClick?: (options: QuoteClickOptions) => Promise<void>;
 };
 
-export class Message extends React.PureComponent<Props> {
-  public ctxMenuID: string;
+export const Message = (props: Props) => {
+  
+  const msgProps = useSelector(state => getGenericReadableMessageSelectorProps(state as any, props.messageId))
 
-  public constructor(props: Props) {
-    super(props);
-    autoBind(this);
-
-    this.ctxMenuID = `ctx-menu-message-${uuid()}`;
+  const ctxMenuID = `ctx-menu-message-${uuid()}`;
+  const onQuoteClick = (quote: QuoteClickOptions) => {
+    void props.onQuoteClick?.(quote);
   }
 
-  // tslint:disable-next-line: cyclomatic-complexity cyclomatic-complexity
-  public render() {
-    return (
-      <GenericReadableMessage
-        onQuoteClick={this.onQuoteClick}
-        ctxMenuID={this.ctxMenuID}
-        messageId={this.props.messageId}
-        isDetailView={this.props.isDetailView}
-      />
-    );
+  if (msgProps?.isDeleted && msgProps.direction === 'outgoing') {
+    console.warn({msgProps});
+    console.warn('not rendering message as its outgoing and deleted');
+    // TODO: this is still getting returned as a number for some reason.
+    // if (msgProps?.isDeleted === 1) {
+    //   console.warn({msgProps});
+    // }
+    return null;
   }
 
-  private onQuoteClick(quote: QuoteClickOptions) {
-    void this.props.onQuoteClick?.(quote);
-  }
+  return (
+    <GenericReadableMessage
+      onQuoteClick={onQuoteClick}
+      ctxMenuID={ctxMenuID}
+      messageId={props.messageId}
+      isDetailView={props.isDetailView}
+    />
+  );
 }

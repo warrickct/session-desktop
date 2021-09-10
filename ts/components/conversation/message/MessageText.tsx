@@ -6,6 +6,7 @@ import {
   getMessageTextProps,
   isMessageSelectionMode,
 } from '../../../state/selectors/conversations';
+import { SessionIcon } from '../../session/icon';
 import { MessageBody } from '../MessageBody';
 
 type Props = {
@@ -26,7 +27,7 @@ export const MessageText = (props: Props) => {
   }
   const { text, direction, status, conversationType, convoId, isDeleted } = selected;
 
-  const contents = isDeleted ? 'Message deleted' :
+  const contents = isDeleted ? 'This message has been deleted' :
     direction === 'incoming' && status === 'error' ? window.i18n('incomingError') : text;
 
   if (!contents) {
@@ -42,12 +43,18 @@ export const MessageText = (props: Props) => {
         status === 'error' && direction === 'incoming' ? 'module-message__text--error' : null
       )}
     >
-      <MessageBody
-        text={contents || ''}
-        isGroup={conversationType === 'group'}
-        convoId={convoId}
-        disableLinks={multiSelectMode}
-      />
+        {isDeleted &&
+          <SessionIcon
+            iconType="delete"
+            iconSize="small"
+          />
+        }
+        <MessageBody
+          text={contents || ''}
+          isGroup={conversationType === 'group'}
+          convoId={convoId}
+          disableLinks={multiSelectMode}
+        />
     </div>
   );
 };

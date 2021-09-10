@@ -947,11 +947,12 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
   }
 
   public async updateMessageHash(messageHash: string) {
+    console.warn("Store on snode response has: ", messageHash);
     this.set({
       messageHash
     });
 
-    this.commit();
+    await this.commit();
   }
 
   public async sendSyncMessageOnly(dataMessage: DataMessage) {
