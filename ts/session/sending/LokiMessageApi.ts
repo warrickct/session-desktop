@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { getMessageById, Snode } from '../../data/data';
 import { storeOnNode } from '../snode_api/SNodeAPI';
 import { getSwarmFor } from '../snode_api/snodePool';
 import { firstTrue } from '../utils/Promise';
@@ -24,7 +25,7 @@ export async function sendMessage(
   options: {
     isPublic?: boolean;
     messageIdForHash?: string;
-  } = {},
+  } = {}
 ): Promise<void> {
   const { isPublic = false } = options;
 
@@ -53,19 +54,21 @@ export async function sendMessage(
     // No pRetry here as if this is a bad path it will be handled and retried in lokiOnionFetch.
     // the only case we could care about a retry would be when the usedNode is not correct,
     // but considering we trigger this request with a few snode in //, this should be fine.
-    const successfulSend = await storeOnNode(usedNode, params, options.messageIdForHash);
-    if (successfulSend) {
-      return usedNode;
+    const successfullSendHash = await storeOnNode(usedNode, params, options.messageIdForHash);
+    if (successfullSendHash) {
+      return { usedNode, successfullSendHash };
     }
     // should we mark snode as bad if it can't store our message?
     return undefined;
   });
 
-  let snode;
+  let sendSuccess: { usedNode: Snode; successfullSendHash: string } | undefined;
   try {
-    snode = await firstTrue(promises);
+    sendSuccess = await firstTrue(promises);
   } catch (e) {
-    const snodeStr = snode ? `${snode.ip}:${snode.port}` : 'null';
+    const snodeStr = sendSuccess?.usedNode
+      ? `${sendSuccess.usedNode.ip}:${sendSuccess.usedNode.port}`
+      : 'null';
     window?.log?.warn(
       `loki_message:::sendMessage - ${e.code} ${e.message} to ${pubKey} via snode:${snodeStr}`
     );
@@ -75,7 +78,15 @@ export async function sendMessage(
     throw new window.textsecure.EmptySwarmError(pubKey, 'Ran out of swarm nodes to query');
   }
 
+  if (options.messageIdForHash) {
+    const message = await getMessageById(options.messageIdForHash);
+    if (message) {
+      await message.updateMessageHash(sendSuccess.successfullSendHash);
+      await message.commit();
+      console.warn(`updated message ${message.get('id')} with hash: ${message.get('messageHash')}`);
+    }
+  }
   window?.log?.info(
-    `loki_message:::sendMessage - Successfully stored message to ${pubKey} via ${snode.ip}:${snode.port}`
+    `loki_message:::sendMessage - Successfully stored message to ${pubKey} via ${sendSuccess.usedNode.ip}:${sendSuccess.usedNode.port}`
   );
 }

@@ -435,6 +435,7 @@ export async function uploadOurAvatar(newAvatarDecrypted?: ArrayBuffer) {
   }
 }
 
+// tslint:disable-next-line: max-func-body-length
 export async function deleteMessagesById(
   messageIds: Array<string>,
   conversationId: string,
@@ -455,10 +456,10 @@ export async function deleteMessagesById(
   const doDelete = async (deleteForEveryone: boolean = true) => {
     let toDeleteLocallyIds: Array<string>;
 
-      const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
-      if (!ourDevicePubkey) {
-        return;
-      }
+    const ourDevicePubkey = UserUtils.getOurPubKeyStrFromCache();
+    if (!ourDevicePubkey) {
+      return;
+    }
     const isAllOurs = selectedMessages.every(message => ourDevicePubkey === message.getSource());
     if (isServerDeletable) {
       //#region open group v2 deletion
@@ -491,13 +492,12 @@ export async function deleteMessagesById(
       }
 
       if (deleteForEveryone) {
-        deleteForAll(selectedMessages);
+        void deleteForAll(selectedMessages);
       } else {
-        deleteForCurrentUser(selectedMessages);
+        void deleteForCurrentUser(selectedMessages);
       }
       //#endregion
     }
-
   };
 
   if (askUserForConfirmation) {
@@ -529,16 +529,16 @@ export async function deleteMessagesById(
           okText: window.i18n('deleteMessageForEveryoneLowercase'),
           okTheme: SessionButtonColor.Danger,
           onClickOk: async () => {
-            doDelete(true)
+            await doDelete(true);
           },
           cancelText: window.i18n('deleteJustForMe'),
           onClickCancel: async () => {
-            doDelete(false);
-          }
+            await doDelete(false);
+          },
         })
       );
       return;
-    }
+    };
 
     window.inboxStore?.dispatch(
       updateConfirmModal({
@@ -550,28 +550,26 @@ export async function deleteMessagesById(
           if (isServerDeletable) {
             await doDelete(true);
             // explicity close modal for this case.
-            window.inboxStore?.dispatch(updateConfirmModal(null))
-          }
-          else {
+            window.inboxStore?.dispatch(updateConfirmModal(null));
+          } else {
             showDeletionTypeModal();
           }
         },
-        closeAfterInput: false
+        closeAfterInput: false,
       })
     );
     //#endregion
-
   } else {
     void doDelete();
   }
 
   /**
    * Deletes messages for everyone in a 1-1 or closed group conversation
-   * @param selectedMessages Messages to delete 
+   * @param selectedMessages Messages to delete
    */
-  async function deleteForAll(selectedMessages: MessageModel[]) {
+  async function deleteForAll(selectedMessages: Array<MessageModel>) {
     console.warn('Deleting messages for all users in this conversation');
-    let result = await conversation.unsendMessages(selectedMessages);
+    const result = await conversation.unsendMessages(selectedMessages);
     // TODO: may need to specify deletion for own device as well.
 
     window.inboxStore?.dispatch(resetSelectedMessageIds());
@@ -583,14 +581,13 @@ export async function deleteMessagesById(
   }
 
   /**
-   * 
+   *
    * @param toDeleteLocallyIds Messages to delete for just this user. Still sends an unsend message to sync
    *  with other devices
-   * @returns 
    */
-  async function deleteForCurrentUser(selectedMessages: MessageModel[]) {
+  async function deleteForCurrentUser(selectedMessages: Array<MessageModel>) {
     console.warn('Deleting messages just for this user');
-    let success = await conversation.unsendMessages(selectedMessages, true);
+    const success = await conversation.unsendMessages(selectedMessages, true);
     console.warn({ success });
     // still need to unsend so it occurs on linked devices.
     // Update view and trigger update
