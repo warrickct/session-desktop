@@ -52,6 +52,7 @@ import { ed25519Str } from '../session/onions/onionPath';
 import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsManager';
 import { IMAGE_JPEG } from '../types/MIME';
 import { UnsendMessage } from '../session/messages/outgoing/controlMessage/UnsendMessage';
+import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export enum ConversationTypeEnum {
   GROUP = 'group',
@@ -558,9 +559,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: fileName || null,
               thumbnail: thumbnail
                 ? {
-                    ...(await loadAttachmentData(thumbnail)),
-                    objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
-                  }
+                  ...(await loadAttachmentData(thumbnail)),
+                  objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
+                }
                 : null,
             };
           })
@@ -583,9 +584,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: null,
               thumbnail: image
                 ? {
-                    ...(await loadAttachmentData(image)),
-                    objectUrl: getAbsoluteAttachmentPath(image.path),
-                  }
+                  ...(await loadAttachmentData(image)),
+                  objectUrl: getAbsoluteAttachmentPath(image.path),
+                }
                 : null,
             };
           })
@@ -732,7 +733,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     toOwnDevice: boolean = false
   ): Promise<boolean> {
     if (!message.get('messageHash')) {
-      console.error(`Message ${message.get('id')} has no hash:: `, message);
       console.error(
         `message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`
       );
@@ -773,9 +773,20 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     // 1-1 Session
     if (!this.isMe() && !this.isGroup()) {
       console.warn('UnsendMesage:: 1-1 conversation');
+      // sending to recipient
       getMessageQueue()
         .sendToPubKey(new PubKey(destinationId), unsendMessage)
         .catch(window?.log?.error);
+
+      // handling for sender's devices
+      const msgsForSwarmDelete = _.compact([message.get('messageHash')]);
+      if (msgsForSwarmDelete.length > 0) {
+        await networkDeleteMessages(msgsForSwarmDelete);
+      }
+      message.markRead(Date.now());
+      message.markAsDeleted()
+      // network delete message
+      // mark as deleted in db.
     }
 
     // closed groups

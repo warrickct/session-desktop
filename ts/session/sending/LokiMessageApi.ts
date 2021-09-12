@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { getMessageById, Snode } from '../../data/data';
 import { storeOnNode } from '../snode_api/SNodeAPI';
 import { getSwarmFor } from '../snode_api/snodePool';
+import { UserUtils } from '../utils';
 import { firstTrue } from '../utils/Promise';
 
 const DEFAULT_CONNECTIONS = 3;
@@ -16,7 +17,6 @@ const DEFAULT_CONNECTIONS = 3;
  * Mikunj:
  *  Temporarily i've made it so `MessageSender` handles open group sends and calls this function for regular sends.
  */
-
 export async function sendMessage(
   pubKey: string,
   data: Uint8Array,
@@ -79,8 +79,9 @@ export async function sendMessage(
     throw new window.textsecure.EmptySwarmError(pubKey, 'Ran out of swarm nodes to query');
   }
 
-  // TODO: only save if the message sent is of sync type.
-  if (messageIdForHash && isSyncMessage ) {
+  // If message also has a sync message, save that hash. Otherwise save the hash from the regular message send i.e. only closed groups in this case.
+  if (messageIdForHash && 
+    (isSyncMessage || !UserUtils.isUsFromCache(pubKey))) {
     console.warn('message contains hash and message --  saving with hash');
     const message = await getMessageById(messageIdForHash);
     if (message) {
