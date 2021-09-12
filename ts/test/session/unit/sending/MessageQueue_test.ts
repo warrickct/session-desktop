@@ -35,7 +35,7 @@ describe('MessageQueue', () => {
   let messageQueueStub: MessageQueue;
 
   // Message Sender Stubs
-  let sendStub: sinon.SinonStub<[RawMessage, (number | undefined)?, (number | undefined)?]>;
+  let sendStub: sinon.SinonStub<[RawMessage, (number | undefined)?, (number | undefined)?, (boolean | undefined)?]>;
 
   beforeEach(() => {
     // Utils Stubs

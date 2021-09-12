@@ -107,6 +107,7 @@ export class MessageSentHandler {
     if (shouldTriggerSyncMessage) {
       if (dataMessage) {
         try {
+          console.warn(`Triggering sending sync message for sentMessage ${sentMessage.identifier}: ${sentMessage}`);
           await fetchedMessage.sendSyncMessage(
             dataMessage as SignalService.DataMessage,
             sentMessage.timestamp

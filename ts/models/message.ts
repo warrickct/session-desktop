@@ -1040,9 +1040,6 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     perfStart(`messageCommit-${this.attributes.id}`);
-    if (this.attributes.messageHash === undefined) {
-      debugger;
-    }
     console.warn(' saving message :', this.attributes.id, '   hash:', this.attributes.messageHash);
     const id = await saveMessage(this.attributes);
     if (triggerUIUpdate) {

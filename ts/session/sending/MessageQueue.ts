@@ -146,12 +146,13 @@ export class MessageQueue {
 
   /**
    * processes pending jobs in the message sending queue.
-   * @param device 
+   * @param device - target device to send to
    */
-  public async processPending(device: PubKey) {
+  public async processPending(device: PubKey, isSyncMessage: boolean = false) {
     const messages = await this.pendingMessageCache.getForDevice(device);
 
     const jobQueue = this.getJobQueue(device);
+    console.warn({ messages });
     messages.forEach(async message => {
       const messageId = String(message.timestamp);
 
@@ -159,7 +160,12 @@ export class MessageQueue {
         // We put the event handling inside this job to avoid sending duplicate events
         const job = async () => {
           try {
-            const wrappedEnvelope = await MessageSender.send(message);
+            const wrappedEnvelope = await MessageSender.send(
+              message,
+              undefined,
+              undefined,
+              isSyncMessage
+            );
             await MessageSentHandler.handleMessageSentSuccess(message, wrappedEnvelope);
 
             const cb = this.pendingMessageCache.callbacks.get(message.identifier);
@@ -202,23 +208,27 @@ export class MessageQueue {
   ): Promise<void> {
     // Don't send to ourselves
     const currentDevice = UserUtils.getOurPubKeyFromCache();
+    let isSyncMessage = false;
     if (currentDevice && destinationPk.isEqual(currentDevice)) {
       // We allow a message for ourselve only if it's a ConfigurationMessage, a ClosedGroupNewMessage,
       // or a message with a syncTarget set.
+
       if (
         message instanceof ConfigurationMessage ||
         message instanceof ClosedGroupNewMessage ||
         (message as any).syncTarget?.length > 0
       ) {
         window?.log?.warn('Processing sync message');
+        isSyncMessage = true;
       } else {
         window?.log?.warn('Dropping message in process() to be sent to ourself');
         return;
       }
     }
 
+    // WW: TODO: Might need to add to sendCache for sending sync messages as well.
     await this.pendingMessageCache.add(destinationPk, message, sentCb, isGroup);
-    void this.processPending(destinationPk);
+    void this.processPending(destinationPk, isSyncMessage);
   }
 
   private getJobQueue(device: PubKey): JobQueue {

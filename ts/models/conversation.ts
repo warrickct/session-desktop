@@ -732,8 +732,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     toOwnDevice: boolean = false
   ): Promise<boolean> {
     if (!message.get('messageHash')) {
-      debugger;
-
       console.error(`Message ${message.get('id')} has no hash:: `, message);
       console.error(
         `message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`

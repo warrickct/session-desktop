@@ -25,9 +25,10 @@ export async function sendMessage(
   options: {
     isPublic?: boolean;
     messageIdForHash?: string;
+    isSyncMessage?: boolean;
   } = {}
 ): Promise<void> {
-  const { isPublic = false } = options;
+  const { isPublic = false, isSyncMessage = false, messageIdForHash } = options;
 
   if (isPublic) {
     window?.log?.warn('this sendMessage() should not be called anymore with an open group message');
@@ -78,8 +79,10 @@ export async function sendMessage(
     throw new window.textsecure.EmptySwarmError(pubKey, 'Ran out of swarm nodes to query');
   }
 
-  if (options.messageIdForHash) {
-    const message = await getMessageById(options.messageIdForHash);
+  // TODO: only save if the message sent is of sync type.
+  if (messageIdForHash && isSyncMessage ) {
+    console.warn('message contains hash and message --  saving with hash');
+    const message = await getMessageById(messageIdForHash);
     if (message) {
       await message.updateMessageHash(sendSuccess.successfullSendHash);
       await message.commit();
