@@ -27,7 +27,7 @@ export const MessageText = (props: Props) => {
   }
   const { text, direction, status, conversationType, convoId, isDeleted } = selected;
 
-  const contents = isDeleted ? 'This message has been deleted' :
+  const contents = isDeleted ? window.i18n('messageDeletedPlaceholder'):
     direction === 'incoming' && status === 'error' ? window.i18n('incomingError') : text;
 
   if (!contents) {

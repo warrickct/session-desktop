@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { getMessageById, Snode } from '../../data/data';
 import { storeOnNode } from '../snode_api/SNodeAPI';
 import { getSwarmFor } from '../snode_api/snodePool';
-import { UserUtils } from '../utils';
+// import { UserUtils } from '../utils';
 import { firstTrue } from '../utils/Promise';
 
 const DEFAULT_CONNECTIONS = 3;
@@ -81,7 +81,7 @@ export async function sendMessage(
 
   // If message also has a sync message, save that hash. Otherwise save the hash from the regular message send i.e. only closed groups in this case.
   if (messageIdForHash && 
-    (isSyncMessage || !UserUtils.isUsFromCache(pubKey))) {
+    (isSyncMessage)) {
     console.warn('message contains hash and message --  saving with hash');
     const message = await getMessageById(messageIdForHash);
     if (message) {

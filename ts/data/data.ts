@@ -776,12 +776,13 @@ export async function getUnreadCountByConversation(conversationId: string): Prom
 
 export async function getMessagesByConversation(
   conversationId: string,
-  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', skipTimerInit = false }
+  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', skipTimerInit = false, isDeleted = false }
 ): Promise<MessageCollection> {
   const messages = await channels.getMessagesByConversation(conversationId, {
     limit,
     receivedAt,
     type,
+    isDeleted
   });
   if (skipTimerInit) {
     for (const message of messages) {

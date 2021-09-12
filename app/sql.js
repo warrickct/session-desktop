@@ -2159,7 +2159,7 @@ function getUnreadCountByConversation(conversationId) {
 
 function getMessagesByConversation(
   conversationId,
-  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%' } = {}
+  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', isDeleted = false} = {}
 ) {
   const rows = globalInstance
     .prepare(
@@ -2177,6 +2177,7 @@ function getMessagesByConversation(
       received_at: receivedAt,
       limit,
       type,
+      // isDeleted
     });
   return map(rows, row => jsonToObject(row.json));
 }

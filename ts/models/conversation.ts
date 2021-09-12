@@ -715,10 +715,34 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
-  public async unsendMessages(messages: MessageModel[], toOwnDevice: boolean = false) {
+  /** TODO: move this to message.ts
+   * Deletes message from this device's swarm and removes from the database. 
+   * @param message Message to delete
+   * @returns boolean if the deletion succeeeded
+   */
+  public async deleteMessageFromConversation(message: MessageModel): Promise<boolean> {
+    try {
+      // handling for sender's devices
+      const msgsForSwarmDelete = _.compact([message.get('messageHash')]);
+      if (msgsForSwarmDelete.length > 0) {
+        await networkDeleteMessages(msgsForSwarmDelete);
+      }
+      // TODO: unsure if we want to keep the message in db for other purposes.
+      message.markRead(Date.now());
+      message.markAsDeleted()
+      // this.updateLastMessage();
+      // this.removeMessage(message.get('id'));
+      return true;
+    } catch (e) {
+      window.log?.error('Error deleting message from swarm', e)
+      return false;
+    }
+  }
+
+  public async unsendMessages(messages: MessageModel[], onlyDeleteForSender: boolean = false) {
     const results = await Promise.all(
       messages.map(message => {
-        return this.unsendMessage(message, toOwnDevice);
+        return this.unsendMessage(message, onlyDeleteForSender);
       })
     );
     return _.every(results);
@@ -730,7 +754,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
    */
   public async unsendMessage(
     message: MessageModel,
-    toOwnDevice: boolean = false
+    onlyDeleteForSender: boolean = false
   ): Promise<boolean> {
     if (!message.get('messageHash')) {
       console.error(
@@ -741,7 +765,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
 
     // handling no destination
-    const destinationId = toOwnDevice ? ownPrimaryDevicePubkey : this.id;
+    const destinationId = onlyDeleteForSender ? ownPrimaryDevicePubkey : this.id;
     if (!destinationId) {
       return false;
     }
@@ -771,30 +795,23 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     //#region sending
     // 1-1 Session
-    if (!this.isMe() && !this.isGroup()) {
+    // if (!this.isMe() && !this.isGroup()) {
+    if (!this.isGroup()) {
       console.warn('UnsendMesage:: 1-1 conversation');
       // sending to recipient
       getMessageQueue()
         .sendToPubKey(new PubKey(destinationId), unsendMessage)
         .catch(window?.log?.error);
-
-      // handling for sender's devices
-      const msgsForSwarmDelete = _.compact([message.get('messageHash')]);
-      if (msgsForSwarmDelete.length > 0) {
-        await networkDeleteMessages(msgsForSwarmDelete);
-      }
-      message.markRead(Date.now());
-      message.markAsDeleted()
-      // network delete message
-      // mark as deleted in db.
+      return await this.deleteMessageFromConversation(message);
     }
 
     // closed groups
     if (this.isClosedGroup() && this.id) {
       console.warn('UnsendMessage:: Sending unsend request to closed group');
-      getMessageQueue()
-        .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
-        .catch(window?.log?.error);
+        getMessageQueue()
+          .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
+          .catch(window?.log?.error);
+      return true;
     }
 
     // open groups
@@ -803,7 +820,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
 
     return true;
-
     //#endregion
   }
 
@@ -841,6 +857,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       received_at: now,
       expireTimer,
       recipients,
+      isDeleted: false
     });
 
     if (!this.isPublic()) {
@@ -1373,6 +1390,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
   public async removeMessage(messageId: any) {
     await dataRemoveMessage(messageId);
     this.updateLastMessage();
+
 
     window.inboxStore?.dispatch(
       conversationActions.messageDeleted({

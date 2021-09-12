@@ -494,7 +494,7 @@ export async function deleteMessagesById(
       if (deleteForEveryone) {
         void deleteForAll(selectedMessages);
       } else {
-        void deleteForCurrentUser(selectedMessages);
+        void deleteForJustThisUser(selectedMessages);
       }
       //#endregion
     }
@@ -585,7 +585,7 @@ export async function deleteMessagesById(
    * @param toDeleteLocallyIds Messages to delete for just this user. Still sends an unsend message to sync
    *  with other devices
    */
-  async function deleteForCurrentUser(selectedMessages: Array<MessageModel>) {
+  async function deleteForJustThisUser(selectedMessages: Array<MessageModel>) {
     console.warn('Deleting messages just for this user');
     const success = await conversation.unsendMessages(selectedMessages, true);
     console.warn({ success });
