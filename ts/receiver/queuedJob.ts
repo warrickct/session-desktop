@@ -255,7 +255,7 @@ async function handleRegularMessage(
   initialMessage: any,
   source: string,
   ourNumber: string,
-  messageHash?: string
+  messageHash: string
 ) {
   const { upgradeMessageSchema } = window.Signal.Migrations;
 
@@ -384,7 +384,7 @@ export async function handleMessageJob(
   ourNumber: string,
   confirm: () => void,
   source: string,
-  messageHash?: string
+  messageHash: string
 ) {
   window?.log?.info(
     `Starting handleDataMessage for message ${message.idForLogging()}, ${message.get(

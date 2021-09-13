@@ -99,7 +99,7 @@ async function handleRequestDetail(
   plaintext: Uint8Array,
   options: ReqOptions,
   lastPromise: Promise<any>,
-  messageHash?: string
+  messageHash: string
 ): Promise<void> {
   const envelope: any = SignalService.Envelope.decode(plaintext);
 
@@ -153,7 +153,7 @@ async function handleRequestDetail(
   }
 }
 
-export function handleRequest(body: any, options: ReqOptions, messageHash?:string): void {
+export function handleRequest(body: any, options: ReqOptions, messageHash:string): void {
   // tslint:disable-next-line no-promise-as-boolean
   const lastPromise = _.last(incomingMessagePromises) || Promise.resolve();
 
@@ -265,7 +265,7 @@ async function handleDecryptedEnvelope(envelope: EnvelopePlus, plaintext: ArrayB
 
 export async function handleOpenGroupV2Message(
   message: OpenGroupMessageV2,
-  roomInfos: OpenGroupRequestCommonType
+  roomInfos: OpenGroupRequestCommonType,
 ) {
   const { base64EncodedData, sentTimestamp, sender, serverId } = message;
   const { serverUrl, roomId } = roomInfos;
@@ -341,6 +341,6 @@ export async function handleOpenGroupV2Message(
     const msg = createMessage(messageCreationData, !isMe);
     const ourNumber = UserUtils.getOurPubKeyStrFromCache();
 
-    await handleMessageJob(msg, conversation, decoded?.dataMessage, ourNumber, noop, sender);
+    await handleMessageJob(msg, conversation, decoded?.dataMessage, ourNumber, noop, sender, '');
   });
 }
