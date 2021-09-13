@@ -73,7 +73,6 @@ module.exports = {
   getNextExpiringMessage,
   getMessagesByConversation,
   getFirstUnreadMessageIdInConversation,
-  markMessageAsDeleted,
 
   getUnprocessedCount,
   getAllUnprocessed,
@@ -1980,16 +1979,6 @@ function cleanSeenMessages() {
   });
 }
 
-function markMessageAsDeleted(id) {
-  try {
-    globalInstance.prepare(
-      `UPDATE ${MESSAGES_TABLE} SET isDeleted = true,  WHERE id = $id);`
-    )
-      .run({ id });
-  } catch (e) {
-    console.warn(`Failed to mark message as deleted ${e}`);
-  }
-}
 
 function saveMessages(arrayOfMessages) {
   globalInstance.transaction(() => {
@@ -2159,7 +2148,7 @@ function getUnreadCountByConversation(conversationId) {
 
 function getMessagesByConversation(
   conversationId,
-  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', isDeleted = false} = {}
+  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%' } = {}
 ) {
   const rows = globalInstance
     .prepare(
@@ -2177,7 +2166,6 @@ function getMessagesByConversation(
       received_at: receivedAt,
       limit,
       type,
-      // isDeleted
     });
   return map(rows, row => jsonToObject(row.json));
 }

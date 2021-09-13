@@ -125,9 +125,6 @@ const channelsToMake = {
   getSeenMessagesByHashList,
   getLastHashBySnode,
 
-  // TODO: decide where to place this
-  markMessageAsDeleted,
-
   getUnprocessedCount,
   getAllUnprocessed,
   getUnprocessedById,
@@ -651,13 +648,6 @@ export async function _removeMessages(ids: Array<string>): Promise<void> {
   await channels.removeMessage(ids);
 }
 
-export async function markMessageAsDeleted(
-  id: number
-): Promise<boolean> {
-  let result = await channels.markMessageAsDeleted(id);
-  return result;
-}
-
 export async function getMessageIdsFromServerIds(
   serverIds: Array<string> | Array<number>,
   conversationId: string
@@ -776,13 +766,12 @@ export async function getUnreadCountByConversation(conversationId: string): Prom
 
 export async function getMessagesByConversation(
   conversationId: string,
-  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', skipTimerInit = false, isDeleted = false }
+  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%', skipTimerInit = false }
 ): Promise<MessageCollection> {
   const messages = await channels.getMessagesByConversation(conversationId, {
     limit,
     receivedAt,
     type,
-    isDeleted
   });
   if (skipTimerInit) {
     for (const message of messages) {
