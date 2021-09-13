@@ -728,10 +728,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
         await networkDeleteMessages(msgsForSwarmDelete);
       }
       // TODO: unsure if we want to keep the message in db for other purposes.
-      message.markRead(Date.now());
-      message.markAsDeleted()
-      // this.updateLastMessage();
-      // this.removeMessage(message.get('id'));
+      await message.markAsDeleted()
+      await message.markRead(Date.now());
+      this.updateLastMessage();
       return true;
     } catch (e) {
       window.log?.error('Error deleting message from swarm', e)
@@ -913,6 +912,11 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       skipTimerInit: true,
     });
     const lastMessageModel = messages.at(0);
+    // if (lastMessageModel && lastMessageModel.attributes.isDeleted && lastMessageModel.attributes.isDeleted === 1) {
+    //   lastMessageModel.set('body', 'Message has been deleted');
+    //   lastMessageModel.commit();
+    // }
+    console.warn({lastMessageModelAfterBody: lastMessageModel});
     const lastMessageJSON = lastMessageModel ? lastMessageModel.toJSON() : null;
     const lastMessageStatusModel = lastMessageModel
       ? lastMessageModel.getMessagePropStatus()

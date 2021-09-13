@@ -778,6 +778,8 @@ export async function getMessagesByConversation(
       message.skipTimerInit = skipTimerInit;
     }
   }
+  console.warn({getByConvoTotal: messages});
+  console.warn({getByConvoTotalFiltered: messages.filter((m: any) => m.isDeleted === 1)});
   return new MessageCollection(messages);
 }
 

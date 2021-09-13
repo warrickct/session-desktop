@@ -785,7 +785,11 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
    * Sets isDeleted property to true.
    */
   public async markAsDeleted() {
-    this.set({ isDeleted: true });
+    console.warn({deletionStatus: this.attributes.isDeleted});
+    this.set({ 
+      isDeleted: true, 
+      body: window.i18n('messageDeleted'),
+    });
     await this.commit();
   }
 
