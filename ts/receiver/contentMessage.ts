@@ -330,6 +330,7 @@ export async function innerHandleContentMessage(
   messageHash?: string
 ): Promise<void> {
   try {
+    const IS_UNSEND_REQUEST_ENABLED = true;
     perfStart(`SignalService.Content.decode-${envelope.id}`);
 
     const content = SignalService.Content.decode(new Uint8Array(plaintext));
@@ -398,7 +399,7 @@ export async function innerHandleContentMessage(
       );
       return;
     }
-    if (content.unsendMessage) {
+    if (content.unsendMessage && IS_UNSEND_REQUEST_ENABLED) {
       await handleUnsendMessage(envelope, content.unsendMessage as SignalService.Unsend);
     }
   } catch (e) {

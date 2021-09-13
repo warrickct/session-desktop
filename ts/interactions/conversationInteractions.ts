@@ -441,6 +441,7 @@ export async function deleteMessagesById(
   conversationId: string,
   askUserForConfirmation: boolean
 ) {
+  const IS_UNSEND_REQUEST_ENABLED = true;
   const conversation = getConversationController().getOrThrow(conversationId);
   const selectedMessages = _.compact(
     await Promise.all(messageIds.map(m => getMessageById(m, false)))
@@ -486,15 +487,22 @@ export async function deleteMessagesById(
       //#region deletion for 1-1 and closed groups
       if (!isAllOurs) {
         ToastUtils.pushMessageDeleteForbidden();
-
         window.inboxStore?.dispatch(resetSelectedMessageIds());
         return;
       }
 
-      if (deleteForEveryone) {
-        void deleteForAll(selectedMessages);
+      if (IS_UNSEND_REQUEST_ENABLED) {
+        if (deleteForEveryone) {
+          void deleteForAll(selectedMessages);
+        } else {
+          void deleteForJustThisUser(selectedMessages);
+        }
       } else {
-        void deleteForJustThisUser(selectedMessages);
+        //#region to remove once unsend enabled
+        await Promise.all(messageIds.map(msgId => conversation.removeMessage(msgId)));
+        ToastUtils.pushDeleted();
+        window.inboxStore?.dispatch(resetSelectedMessageIds());
+      //#endregion
       }
       //#endregion
     }
@@ -548,6 +556,7 @@ export async function deleteMessagesById(
         okTheme: SessionButtonColor.Danger,
         onClickOk: async () => {
           if (isServerDeletable) {
+            // unsend logic
             await doDelete(true);
             // explicity close modal for this case.
             window.inboxStore?.dispatch(updateConfirmModal(null));
@@ -571,7 +580,6 @@ export async function deleteMessagesById(
     console.warn('Deleting messages for all users in this conversation');
     const result = await conversation.unsendMessages(selectedMessages);
     // TODO: may need to specify deletion for own device as well.
-
     window.inboxStore?.dispatch(resetSelectedMessageIds());
     if (result) {
       ToastUtils.pushDeleted();

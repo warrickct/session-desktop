@@ -1369,23 +1369,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     return this.get('type') === 'group';
   }
 
-  // public deleteContact() {
-  //   let title = window.i18n('delete');
-  //   let message = window.i18n('deleteContactConfirmation');
-
-  //   if (this.isGroup()) {
-  //     title = window.i18n('leaveGroup');
-  //     message = window.i18n('leaveGroupConfirmation');
-  //   }
-
-  //   window.confirmationDialog({
-  //     title,
-  //     message,
-  //     resolve: () => {
-  //       void getConversationController().deleteContact(this.id);
-  //     },
-  //   });
-  // }
 
   public async removeMessage(messageId: any) {
     await dataRemoveMessage(messageId);
