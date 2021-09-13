@@ -495,12 +495,12 @@ async function handleTypingMessage(
  * @param unsendMessage data required to delete message
  */
 async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: SignalService.Unsend) {
-  const { source } = envelope;
-  const { author, timestamp } = unsendMessage;
+  const { source: unsendSource } = envelope;
+  const { author: messageAuthor, timestamp } = unsendMessage;
   await removeFromCache(envelope);
 
   //#region early exit conditions
-  if (!unsendMessage || !source) {
+  if (!unsendMessage || !unsendSource) {
     window?.log?.error('UnsendMessageHandler:: Invalid parameters -- dropping message.')
   }
 
@@ -508,18 +508,22 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
     window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message')
   }
 
-  const conversation = getConversationController().get(source);
+  const conversation = getConversationController().get(unsendSource);
   if (!conversation) {
     return;
   }
-  //#endregion
-
   console.warn("Handling unsend message");
 
   const messageToDelete = await getMessageBySenderAndTimestamp({
-    source: author,
+    source: messageAuthor,
     timestamp: Lodash.toNumber(timestamp)
   });
+
+  if (unsendSource !== messageAuthor) {
+    window?.log?.error("Unsend Message received with mismatching author and requestor. Dropping message.")
+    return;
+  }
+  //#endregion
 
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
 

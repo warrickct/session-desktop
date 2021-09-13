@@ -782,7 +782,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
 
   /**
    * Marks the message as deleted to show the author has deleted this message for everyone.
-   * Sets isDeleted property to true.
+   * Sets isDeleted property to true. Set message body text to deletion placeholder for conversation list items.
    */
   public async markAsDeleted() {
     console.warn({deletionStatus: this.attributes.isDeleted});
