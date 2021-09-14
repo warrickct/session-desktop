@@ -715,27 +715,37 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
-  /** TODO: move this to message.ts
-   * Deletes message from this device's swarm and removes from the database. 
+  /** 
+   * Deletes message from this device's swarm and handles local deletion of message
    * @param message Message to delete
+   * @param removeFromDatabase delete message from the database entirely or just modify the message data
    * @returns boolean if the deletion succeeeded
    */
-  public async deleteMessageFromConversation(message: MessageModel): Promise<boolean> {
+  public async deleteMessage(message: MessageModel, removeFromDatabase = false): Promise<boolean> {
+    //#region deletion on network
     try {
-      // handling for sender's devices
-      const msgsForSwarmDelete = _.compact([message.get('messageHash')]);
-      if (msgsForSwarmDelete.length > 0) {
-        await networkDeleteMessages(msgsForSwarmDelete);
+      const deletionMessageHashes = _.compact([message.get('messageHash')]);
+      if (deletionMessageHashes.length > 0) {
+        await networkDeleteMessages(deletionMessageHashes);
       }
-      // TODO: unsure if we want to keep the message in db for other purposes.
-      await message.markAsDeleted()
-      await message.markRead(Date.now());
-      this.updateLastMessage();
-      return true;
     } catch (e) {
       window.log?.error('Error deleting message from swarm', e)
       return false;
     }
+    //#endregion
+
+    //#region handling database
+    if (removeFromDatabase) {
+      // remove the message from the database
+      await this.removeMessage(message.get('id'));
+    } else {
+      // just mark the message as deleted but still show in conversation
+      await message.markAsDeleted()
+      await message.markRead(Date.now());
+      this.updateLastMessage();
+    }
+    //#endregion
+    return true;
   }
 
   public async unsendMessages(messages: MessageModel[], onlyDeleteForSender: boolean = false) {
@@ -763,7 +773,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
     const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
 
-    // handling no destination
+    // If deleting just for sender, set destination to sender
     const destinationId = onlyDeleteForSender ? ownPrimaryDevicePubkey : this.id;
     if (!destinationId) {
       return false;
@@ -801,15 +811,16 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       getMessageQueue()
         .sendToPubKey(new PubKey(destinationId), unsendMessage)
         .catch(window?.log?.error);
-      return await this.deleteMessageFromConversation(message);
+      return await this.deleteMessage(message);
     }
 
     // closed groups
     if (this.isClosedGroup() && this.id) {
       console.warn('UnsendMessage:: Sending unsend request to closed group');
-        getMessageQueue()
-          .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
-          .catch(window?.log?.error);
+      getMessageQueue()
+        .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
+        .catch(window?.log?.error);
+      // not calling deleteMessage as it'll be called by the unsend handler when it's received
       return true;
     }
 
@@ -916,7 +927,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //   lastMessageModel.set('body', 'Message has been deleted');
     //   lastMessageModel.commit();
     // }
-    console.warn({lastMessageModelAfterBody: lastMessageModel});
+    console.warn({ lastMessageModelAfterBody: lastMessageModel });
     const lastMessageJSON = lastMessageModel ? lastMessageModel.toJSON() : null;
     const lastMessageStatusModel = lastMessageModel
       ? lastMessageModel.getMessagePropStatus()

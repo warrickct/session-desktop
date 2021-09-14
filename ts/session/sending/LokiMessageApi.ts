@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getMessageById, Snode } from '../../data/data';
+import { getConversationById, getMessageById, Snode } from '../../data/data';
 import { storeOnNode } from '../snode_api/SNodeAPI';
 import { getSwarmFor } from '../snode_api/snodePool';
 // import { UserUtils } from '../utils';
@@ -79,9 +79,12 @@ export async function sendMessage(
     throw new window.textsecure.EmptySwarmError(pubKey, 'Ran out of swarm nodes to query');
   }
 
+  const conversation = await getConversationById(pubKey);
+  const isClosedGroup = conversation?.isClosedGroup();
+
   // If message also has a sync message, save that hash. Otherwise save the hash from the regular message send i.e. only closed groups in this case.
   if (messageIdForHash && 
-    (isSyncMessage)) {
+    (isSyncMessage || isClosedGroup )) {
     console.warn('message contains hash and message --  saving with hash');
     const message = await getMessageById(messageIdForHash);
     if (message) {

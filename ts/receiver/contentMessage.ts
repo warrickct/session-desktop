@@ -18,8 +18,6 @@ import { removeMessagePadding } from '../session/crypto/BufferPadding';
 import { perfEnd, perfStart } from '../session/utils/Performance';
 import { getAllCachedECKeyPair } from './closedGroups';
 import { getMessageBySenderAndTimestamp } from '../data/data';
-// import { getMessageBySenderAndTimestamp, markMessageAsDeleted } from '../data/data';
-import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export async function handleContentMessage(envelope: EnvelopePlus, messageHash?: string) {
   try {
@@ -503,43 +501,23 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   if (!unsendMessage || !unsendSource) {
     window?.log?.error('UnsendMessageHandler:: Invalid parameters -- dropping message.')
   }
-
   if (!timestamp) {
     window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message')
   }
-
   const conversation = getConversationController().get(unsendSource);
   if (!conversation) {
     return;
   }
-  console.warn("Handling unsend message");
-
   const messageToDelete = await getMessageBySenderAndTimestamp({
     source: messageAuthor,
     timestamp: Lodash.toNumber(timestamp)
   });
-
-  if (unsendSource !== messageAuthor) {
-    window?.log?.error("Unsend Message received with mismatching author and requestor. Dropping message.")
-    return;
-  }
+  const messageHash = messageToDelete?.getPropsForMessage().messageHash;
   //#endregion
 
-  const messageHash = messageToDelete?.getPropsForMessage().messageHash;
-
-  //#region deleting the message from local db
+  //#region executing deletion
   if (messageHash && messageToDelete) {
-    // delete on this device's swarm.
-    console.warn(`Received message unsend request. Deleting on network: ${messageHash}`);
-    let networkDeleteResults = await networkDeleteMessages([messageHash]) // TODO: refactor deletion into single fn call and batch call.
-    console.warn({networkDeleteResults});
-
-    // mark as deleted locally
-    if (messageToDelete.isUnread()) {
-      console.warn( "Message to be unsent / deleted is unread. Marking as read");
-      messageToDelete.markRead(Date.now()) // TODO: check if this is alright
-    }
-    await messageToDelete.markAsDeleted();
+    await conversation.deleteMessage(messageToDelete);
   }
   //#endregion
 }
