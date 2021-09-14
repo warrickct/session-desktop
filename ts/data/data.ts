@@ -774,8 +774,6 @@ export async function getMessagesByConversation(
       message.skipTimerInit = skipTimerInit;
     }
   }
-  console.warn({ getByConvoTotal: messages });
-  console.warn({ getByConvoTotalFiltered: messages.filter((m: any) => m.isDeleted === 1) });
   return new MessageCollection(messages);
 }
 
@@ -859,8 +857,8 @@ export type UnprocessedParameter = {
   envelope: string;
   timestamp: number;
   attempts: number;
+  messageHash: string;
   senderIdentity?: string;
-  messageHash?: string;
 };
 
 export async function saveUnprocessed(data: UnprocessedParameter): Promise<string> {

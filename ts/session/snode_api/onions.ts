@@ -701,9 +701,6 @@ export const sendOnionRequestHandlingSnodeEject = async ({
     test,
   });
 
-  if (test === 'delete') {
-    console.warn({ processed });
-  }
   return processed;
 };
 

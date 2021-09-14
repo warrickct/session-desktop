@@ -153,7 +153,6 @@ export class MessageQueue {
     const messages = await this.pendingMessageCache.getForDevice(device);
 
     const jobQueue = this.getJobQueue(device);
-    console.warn({ messages });
     messages.forEach(async message => {
       const messageId = String(message.timestamp);
 

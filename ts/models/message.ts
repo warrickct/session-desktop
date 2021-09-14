@@ -785,7 +785,6 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
    * Sets isDeleted property to true. Set message body text to deletion placeholder for conversation list items.
    */
   public async markAsDeleted() {
-    console.warn({ deletionStatus: this.attributes.isDeleted });
     this.set({
       isDeleted: true,
       body: window.i18n('messageDeleted'),
@@ -1043,7 +1042,6 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     perfStart(`messageCommit-${this.attributes.id}`);
-    console.warn(' saving message :', this.attributes.id, '   hash:', this.attributes.messageHash);
     const id = await saveMessage(this.attributes);
     if (triggerUIUpdate) {
       this.dispatchMessageUpdate();

@@ -577,7 +577,7 @@ export async function deleteMessagesById(
    * @param msgsToDelete Messages to delete
    */
   async function deleteForAll(msgsToDelete: Array<MessageModel>) {
-    console.warn('Deleting messages for all users in this conversation');
+    window?.log?.warn('Deleting messages for all users in this conversation');
     const result = await conversation.unsendMessages(msgsToDelete);
     // TODO: may need to specify deletion for own device as well.
     window.inboxStore?.dispatch(resetSelectedMessageIds());
@@ -594,7 +594,7 @@ export async function deleteMessagesById(
    *  with other devices
    */
   async function deleteForJustThisUser(msgsToDelete: Array<MessageModel>) {
-    console.warn('Deleting messages just for this user');
+    window?.log?.warn('Deleting messages just for this user');
     // is deleting on swarm sufficient or does it need to be unsent as well?
     const deleteResult = await conversation.deleteMessages(msgsToDelete);
     // Update view and trigger update

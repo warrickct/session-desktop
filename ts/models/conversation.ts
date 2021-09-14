@@ -926,11 +926,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       skipTimerInit: true,
     });
     const lastMessageModel = messages.at(0);
-    // if (lastMessageModel && lastMessageModel.attributes.isDeleted && lastMessageModel.attributes.isDeleted === 1) {
-    //   lastMessageModel.set('body', 'Message has been deleted');
-    //   lastMessageModel.commit();
-    // }
-    console.warn({ lastMessageModelAfterBody: lastMessageModel });
     const lastMessageJSON = lastMessageModel ? lastMessageModel.toJSON() : null;
     const lastMessageStatusModel = lastMessageModel
       ? lastMessageModel.getMessagePropStatus()
