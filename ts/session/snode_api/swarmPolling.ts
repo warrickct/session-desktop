@@ -30,7 +30,7 @@ interface Message {
 }
 
 // Some websocket nonsense
-export function processMessage(message: string,  options: any = {}, messageHash: string) {
+export function processMessage(message: string, options: any = {}, messageHash: string) {
   try {
     const dataPlaintext = new Uint8Array(StringUtils.encode(message, 'base64'));
     const messageBuf = SignalService.WebSocketMessage.decode(dataPlaintext);
@@ -258,7 +258,7 @@ export class SwarmPolling {
 
     newMessages.forEach((m: Message) => {
       const options = isGroup ? { conversationId: pkStr } : {};
-      processMessage(m.data,  options, m.hash);
+      processMessage(m.data, options, m.hash);
     });
   }
 

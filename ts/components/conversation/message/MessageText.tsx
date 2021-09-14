@@ -27,8 +27,11 @@ export const MessageText = (props: Props) => {
   }
   const { text, direction, status, conversationType, convoId, isDeleted } = selected;
 
-  const contents = isDeleted ? window.i18n('messageDeletedPlaceholder'):
-    direction === 'incoming' && status === 'error' ? window.i18n('incomingError') : text;
+  const contents = isDeleted
+    ? window.i18n('messageDeletedPlaceholder')
+    : direction === 'incoming' && status === 'error'
+    ? window.i18n('incomingError')
+    : text;
 
   if (!contents) {
     return null;
@@ -43,18 +46,13 @@ export const MessageText = (props: Props) => {
         status === 'error' && direction === 'incoming' ? 'module-message__text--error' : null
       )}
     >
-        {isDeleted &&
-          <SessionIcon
-            iconType="delete"
-            iconSize="small"
-          />
-        }
-        <MessageBody
-          text={contents || ''}
-          isGroup={conversationType === 'group'}
-          convoId={convoId}
-          disableLinks={multiSelectMode}
-        />
+      {isDeleted && <SessionIcon iconType="delete" iconSize="small" />}
+      <MessageBody
+        text={contents || ''}
+        isGroup={conversationType === 'group'}
+        convoId={convoId}
+        disableLinks={multiSelectMode}
+      />
     </div>
   );
 };

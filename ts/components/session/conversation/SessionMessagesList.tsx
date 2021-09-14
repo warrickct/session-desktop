@@ -64,7 +64,7 @@ export const SessionMessagesList = (props: {
         if (!messageProps) {
           return null;
         }
-         
+
         return [
           <Message
             messageId={messageId}

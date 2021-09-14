@@ -489,7 +489,6 @@ async function handleTypingMessage(
 
 /**
  * delete message from user swarm and delete locally upon receiving unsend request
- * @param envelope 
  * @param unsendMessage data required to delete message
  */
 async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: SignalService.Unsend) {
@@ -499,10 +498,10 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
 
   //#region early exit conditions
   if (!unsendMessage || !unsendSource) {
-    window?.log?.error('UnsendMessageHandler:: Invalid parameters -- dropping message.')
+    window?.log?.error('UnsendMessageHandler:: Invalid parameters -- dropping message.');
   }
   if (!timestamp) {
-    window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message')
+    window?.log?.error('UnsendMessageHander:: Invalid timestamp -- dropping message');
   }
   const conversation = getConversationController().get(unsendSource);
   if (!conversation) {
@@ -510,7 +509,7 @@ async function handleUnsendMessage(envelope: EnvelopePlus, unsendMessage: Signal
   }
   const messageToDelete = await getMessageBySenderAndTimestamp({
     source: messageAuthor,
-    timestamp: Lodash.toNumber(timestamp)
+    timestamp: Lodash.toNumber(timestamp),
   });
   const messageHash = messageToDelete?.getPropsForMessage().messageHash;
   //#endregion

@@ -91,18 +91,19 @@ export class MessageQueue {
   public async sendToGroup(
     message: ClosedGroupMessageType,
     sentCb?: (message: RawMessage) => Promise<void>,
-    groupId?: PubKey,
+    groupPubKey?: PubKey
   ): Promise<void> {
-    // let groupId: PubKey | undefined;
+    let destinationPubKey: PubKey | undefined;
     if (message instanceof ExpirationTimerUpdateMessage || message instanceof ClosedGroupMessage) {
-      groupId = message.groupId;
+      destinationPubKey = groupPubKey ? groupPubKey : message.groupId;
     }
 
-    if (!groupId) {
+    if (!destinationPubKey) {
       throw new Error('Invalid group message passed in sendToGroup.');
     }
+
     // if groupId is set here, it means it's for a medium group. So send it as it
-    return this.sendToPubKey(PubKey.cast(groupId), message, sentCb, true);
+    return this.sendToPubKey(PubKey.cast(destinationPubKey), message, sentCb, true);
   }
 
   public async sendSyncMessage(

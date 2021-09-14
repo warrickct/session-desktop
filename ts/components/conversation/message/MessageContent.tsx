@@ -5,7 +5,10 @@ import { InView } from 'react-intersection-observer';
 import { useSelector } from 'react-redux';
 import _ from 'underscore';
 import { MessageRenderingProps, QuoteClickOptions } from '../../../models/messageType';
-import { getMessageContentSelectorProps, getMessageTextProps } from '../../../state/selectors/conversations';
+import {
+  getMessageContentSelectorProps,
+  getMessageTextProps,
+} from '../../../state/selectors/conversations';
 import {
   canDisplayImage,
   getGridDimensions,
@@ -56,9 +59,9 @@ function getIsShowingImage(
     const hasText = text?.length;
     return Boolean(
       displayImage &&
-      !hasText &&
-      ((isImage(attachments) && hasImage(attachments)) ||
-        (isVideo(attachments) && hasVideoScreenshot(attachments)))
+        !hasText &&
+        ((isImage(attachments) && hasImage(attachments)) ||
+          (isVideo(attachments) && hasVideoScreenshot(attachments)))
     );
   }
 
@@ -176,7 +179,7 @@ export const MessageContent = (props: Props) => {
         triggerOnce={false}
       >
         <IsMessageVisibleContext.Provider value={isMessageVisible}>
-          {!isDeleted &&
+          {!isDeleted && (
             <>
               <MessageQuote messageId={props.messageId} onQuoteClick={props.onQuoteClick} />
               <MessageAttachment
@@ -185,11 +188,12 @@ export const MessageContent = (props: Props) => {
                 handleImageError={handleImageError}
               />
             </>
-          }
+          )}
           {hasContentAfterAttachmentAndQuote ? (
             <Flex padding="7px" container={true} flexDirection="column">
-              {!isDeleted &&
-                <MessagePreview messageId={props.messageId} handleImageError={handleImageError} />}
+              {!isDeleted && (
+                <MessagePreview messageId={props.messageId} handleImageError={handleImageError} />
+              )}
 
               <MessageText messageId={props.messageId} />
             </Flex>

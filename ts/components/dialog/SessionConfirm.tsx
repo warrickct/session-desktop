@@ -13,7 +13,7 @@ export interface SessionConfirmDialogProps {
   title?: string;
   onOk?: any;
   onClose?: any;
-  closeAfterInput?: boolean
+  closeAfterInput?: boolean;
 
   /**
    * function to run on ok click. Closes modal after execution by default
@@ -35,7 +35,6 @@ export interface SessionConfirmDialogProps {
   iconSize?: SessionIconSize;
   shouldShowConfirm?: boolean | undefined;
   showExitIcon?: boolean | undefined;
-
 }
 
 export const SessionConfirm = (props: SessionConfirmDialogProps) => {
@@ -53,7 +52,7 @@ export const SessionConfirm = (props: SessionConfirmDialogProps) => {
     shouldShowConfirm,
     onClickCancel,
     showExitIcon,
-    closeAfterInput = true
+    closeAfterInput = true,
   } = props;
 
   const [isLoading, setIsLoading] = useState(false);

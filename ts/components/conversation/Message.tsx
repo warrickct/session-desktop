@@ -17,13 +17,14 @@ type Props = {
 };
 
 export const Message = (props: Props) => {
-  
-  const msgProps = useSelector(state => getGenericReadableMessageSelectorProps(state as any, props.messageId))
+  const msgProps = useSelector(state =>
+    getGenericReadableMessageSelectorProps(state as any, props.messageId)
+  );
 
   const ctxMenuID = `ctx-menu-message-${uuid()}`;
   const onQuoteClick = (quote: QuoteClickOptions) => {
     void props.onQuoteClick?.(quote);
-  }
+  };
 
   if (msgProps?.isDeleted && msgProps.direction === 'outgoing') {
     // TODO: this is still getting returned as a number for some reason.
@@ -41,4 +42,4 @@ export const Message = (props: Props) => {
       isDetailView={props.isDetailView}
     />
   );
-}
+};

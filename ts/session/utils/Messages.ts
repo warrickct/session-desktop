@@ -7,7 +7,10 @@ import { ClosedGroupEncryptionPairReplyMessage } from '../messages/outgoing/cont
 import { ContentMessage } from '../messages/outgoing';
 import { ExpirationTimerUpdateMessage } from '../messages/outgoing/controlMessage/ExpirationTimerUpdateMessage';
 
-function getEncryptionTypeFromMessageType(message: ContentMessage, isGroup = false): EncryptionType {
+function getEncryptionTypeFromMessageType(
+  message: ContentMessage,
+  isGroup = false
+): EncryptionType {
   // ClosedGroupNewMessage is sent using established channels, so using fallback
   if (
     message instanceof ClosedGroupNewMessage ||
@@ -29,7 +32,11 @@ function getEncryptionTypeFromMessageType(message: ContentMessage, isGroup = fal
   }
 }
 
-export async function toRawMessage(destinationPubKey: PubKey, message: ContentMessage, isGroup = false): Promise<RawMessage> {
+export async function toRawMessage(
+  destinationPubKey: PubKey,
+  message: ContentMessage,
+  isGroup = false
+): Promise<RawMessage> {
   const timestamp = message.timestamp;
   const ttl = message.ttl();
   const plainTextBuffer = message.plainTextBuffer();

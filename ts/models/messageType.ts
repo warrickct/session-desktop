@@ -100,13 +100,12 @@ export interface MessageAttributes {
   dataExtractionNotification?: DataExtractionNotificationMsg;
 
   /**
-   * This field is used for unsending messages and used in sending unsend message requests. 
+   * This field is used for unsending messages and used in sending unsend message requests.
    */
   messageHash?: string;
 
-
   /**
-   * This field is used for unsending messages and used in sending unsend message requests. 
+   * This field is used for unsending messages and used in sending unsend message requests.
    */
   isDeleted?: boolean;
 }

@@ -408,16 +408,19 @@ export async function handleMessageJob(
       }
       await handleExpirationTimerUpdate(conversation, message, source, expireTimer);
     } else {
-      await handleRegularMessage(conversation, message, initialMessage, source, ourNumber, messageHash);
+      await handleRegularMessage(
+        conversation,
+        message,
+        initialMessage,
+        source,
+        ourNumber,
+        messageHash
+      );
     }
-
-    console.log({messageHash});
 
     const id = await message.commit();
 
     message.set({ id });
-
-    console.log({message: message.getMessageModelProps() })
 
     getMessageController().register(message.id, message);
 

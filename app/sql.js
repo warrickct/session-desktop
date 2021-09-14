@@ -192,7 +192,7 @@ function migrateSchemaVersion(db) {
   const newUserVersion = schemaVersion > 18 ? 16 : schemaVersion;
   console.log(
     'migrateSchemaVersion: Migrating from schema_version ' +
-    `${schemaVersion} to user_version ${newUserVersion}`
+      `${schemaVersion} to user_version ${newUserVersion}`
   );
 
   setUserVersion(db, newUserVersion);
@@ -1979,7 +1979,6 @@ function cleanSeenMessages() {
   });
 }
 
-
 function saveMessages(arrayOfMessages) {
   globalInstance.transaction(() => {
     map(arrayOfMessages, message => saveMessage(message));
@@ -2073,7 +2072,6 @@ function getMessageBySenderAndServerId({ source, serverId }) {
 
   return map(rows, row => jsonToObject(row.json));
 }
-
 
 function getMessageBySenderAndTimestamp({ source, timestamp }) {
   const rows = globalInstance
@@ -2312,7 +2310,7 @@ function saveUnprocessed(data) {
       attempts,
       envelope,
       senderIdentity,
-      messageHash
+      messageHash,
     });
 
   return id;

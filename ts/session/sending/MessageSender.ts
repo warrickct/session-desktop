@@ -41,7 +41,10 @@ export async function send(
 
   return pRetry(
     async () => {
-      await LokiMessageApi.sendMessage(device.key, data, timestamp, ttl, { messageIdForHash: message.identifier, isSyncMessage});
+      await LokiMessageApi.sendMessage(device.key, data, timestamp, ttl, {
+        messageIdForHash: message.identifier,
+        isSyncMessage,
+      });
       return data;
     },
     {

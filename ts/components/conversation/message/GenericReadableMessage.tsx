@@ -149,7 +149,7 @@ export const GenericReadableMessage = (props: Props) => {
   } = msgProps;
 
   // if (isDeleted) {
-  //   return null; 
+  //   return null;
   // }
 
   if (isExpired) {

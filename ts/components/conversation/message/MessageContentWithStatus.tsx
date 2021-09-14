@@ -13,7 +13,10 @@ import { MessageContent } from './MessageContent';
 import { MessageContextMenu } from './MessageContextMenu';
 import { MessageStatus } from './MessageStatus';
 
-export type MessageContentWithStatusSelectorProps = Pick<MessageRenderingProps, 'direction' | 'isDeleted'>;
+export type MessageContentWithStatusSelectorProps = Pick<
+  MessageRenderingProps,
+  'direction' | 'isDeleted'
+>;
 
 type Props = {
   messageId: string;
@@ -80,9 +83,7 @@ export const MessageContentWithStatuses = (props: Props) => {
         />
       </div>
       <MessageStatus messageId={messageId} isCorrectSide={!isIncoming} />
-      {!isDeleted &&
-        <MessageContextMenu messageId={messageId} contextMenuId={ctxMenuID} />
-      }
+      {!isDeleted && <MessageContextMenu messageId={messageId} contextMenuId={ctxMenuID} />}
     </div>
   );
 };

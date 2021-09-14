@@ -1,11 +1,10 @@
-
 import { SignalService } from '../../../../protobuf';
 import { ContentMessage } from '../ContentMessage';
 import { MessageParams } from '../Message';
 
 interface UnsendMessageParams extends MessageParams {
-    timestamp: number;
-    author: string;
+  timestamp: number;
+  author: string;
 }
 
 export class UnsendMessage extends ContentMessage {

@@ -691,8 +691,6 @@ export async function getMessageBySender({
   return new MessageModel(messages[0]);
 }
 
-
-
 export async function getMessageBySenderAndServerId({
   source,
   serverId,
@@ -729,12 +727,10 @@ export async function getMessageBySenderAndServerTimestamp({
   return new MessageModel(messages[0]);
 }
 
-
 /**
- * 
+ *
  * @param source senders id
  * @param timestamp the timestamp of the message - not to be confused with the serverTimestamp. This is equivalent to sent_at
- * @returns 
  */
 export async function getMessageBySenderAndTimestamp({
   source,
@@ -778,8 +774,8 @@ export async function getMessagesByConversation(
       message.skipTimerInit = skipTimerInit;
     }
   }
-  console.warn({getByConvoTotal: messages});
-  console.warn({getByConvoTotalFiltered: messages.filter((m: any) => m.isDeleted === 1)});
+  console.warn({ getByConvoTotal: messages });
+  console.warn({ getByConvoTotalFiltered: messages.filter((m: any) => m.isDeleted === 1) });
   return new MessageCollection(messages);
 }
 

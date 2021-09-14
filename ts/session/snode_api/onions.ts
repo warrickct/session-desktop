@@ -436,15 +436,13 @@ export async function processOnionResponse({
     window?.log?.warn(e);
   }
 
-  if (false) {
-    await processOnionRequestErrorOnPath(
-      response?.status || STATUS_NO_STATUS,
-      ciphertext,
-      guardNode.pubkey_ed25519,
-      lsrpcEd25519Key,
-      associatedWith
-    );
-  }
+  await processOnionRequestErrorOnPath(
+    response?.status || STATUS_NO_STATUS,
+    ciphertext,
+    guardNode.pubkey_ed25519,
+    lsrpcEd25519Key,
+    associatedWith
+  );
 
   if (!ciphertext) {
     window?.log?.warn(

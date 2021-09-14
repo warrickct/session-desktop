@@ -204,9 +204,6 @@ export type SendParams = {
 
 /**
  * get snodes for pubkey from random snode. Uses an existing snode
- * @param pubKe
- * @param targetNode
- * @returns
  */
 async function requestSnodesForPubkeyWithTargetNodeRetryable(
   pubKey: string,
@@ -788,10 +785,9 @@ export const TEST_getMinTimeout = () => 500;
 
 /**
  * Locally deletes message and deletes message on the network (all nodes that contain the message)
- * @param messageId
- * @returns
  */
-export const networkDeleteMessages = async (hashes: string[]): Promise<any> => {
+// tslint:disable-next-line: max-func-body-length
+export const networkDeleteMessages = async (hashes: Array<string>): Promise<any> => {
   const sodium = await getSodium();
   const userX25519PublicKey = UserUtils.getOurPubKeyStrFromCache();
 

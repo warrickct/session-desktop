@@ -785,9 +785,9 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
    * Sets isDeleted property to true. Set message body text to deletion placeholder for conversation list items.
    */
   public async markAsDeleted() {
-    console.warn({deletionStatus: this.attributes.isDeleted});
-    this.set({ 
-      isDeleted: true, 
+    console.warn({ deletionStatus: this.attributes.isDeleted });
+    this.set({
+      isDeleted: true,
       body: window.i18n('messageDeleted'),
     });
     await this.commit();
@@ -951,9 +951,8 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
 
   public async updateMessageHash(messageHash: string) {
     if (!messageHash) {
-      debugger;
+      window?.log?.error('Message hash not provided to update message hash');
     }
-    console.warn('Store on snode response has: ', messageHash);
     this.set({
       messageHash,
     });

@@ -502,7 +502,7 @@ export async function deleteMessagesById(
         await Promise.all(messageIds.map(msgId => conversation.removeMessage(msgId)));
         ToastUtils.pushDeleted();
         window.inboxStore?.dispatch(resetSelectedMessageIds());
-      //#endregion
+        //#endregion
       }
       //#endregion
     }
@@ -574,11 +574,11 @@ export async function deleteMessagesById(
 
   /**
    * Deletes messages for everyone in a 1-1 or closed group conversation
-   * @param selectedMessages Messages to delete
+   * @param msgsToDelete Messages to delete
    */
-  async function deleteForAll(selectedMessages: Array<MessageModel>) {
+  async function deleteForAll(msgsToDelete: Array<MessageModel>) {
     console.warn('Deleting messages for all users in this conversation');
-    const result = await conversation.unsendMessages(selectedMessages);
+    const result = await conversation.unsendMessages(msgsToDelete);
     // TODO: may need to specify deletion for own device as well.
     window.inboxStore?.dispatch(resetSelectedMessageIds());
     if (result) {
@@ -593,22 +593,19 @@ export async function deleteMessagesById(
    * @param toDeleteLocallyIds Messages to delete for just this user. Still sends an unsend message to sync
    *  with other devices
    */
-  async function deleteForJustThisUser(selectedMessages: Array<MessageModel>) {
+  async function deleteForJustThisUser(msgsToDelete: Array<MessageModel>) {
     console.warn('Deleting messages just for this user');
-    const success = await conversation.unsendMessages(selectedMessages, true);
-    console.warn({ success });
-    // still need to unsend so it occurs on linked devices.
+    // is deleting on swarm sufficient or does it need to be unsent as well?
+    const deleteResult = await conversation.deleteMessages(msgsToDelete);
     // Update view and trigger update
     window.inboxStore?.dispatch(resetSelectedMessageIds());
-    if (success) {
+    if (deleteResult) {
       ToastUtils.pushDeleted();
     } else {
       ToastUtils.someDeletionsFailed();
     }
   }
 }
-
-
 
 export async function replyToMessage(messageId: string) {
   const quotedMessageModel = await getMessageById(messageId);

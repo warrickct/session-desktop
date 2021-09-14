@@ -163,7 +163,6 @@ export const MessageContextMenu = (props: Props) => {
       onHidden={onContextMenuHidden}
       animation={animation.fade}
     >
-      
       {!multipleAttachments && attachments && attachments[0] ? (
         <Item onClick={saveAttachment}>{window.i18n('downloadAttachment')}</Item>
       ) : null}

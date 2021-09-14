@@ -332,7 +332,7 @@ export async function handleDataMessage(
     timestamp: _.toNumber(envelope.timestamp),
     receivedAt: envelope.receivedAt,
     message,
-    messageHash
+    messageHash,
   };
 
   await handleMessageEvent(ev); // dataMessage
@@ -471,7 +471,7 @@ export function initIncomingMessage(data: MessageCreationData): MessageModel {
     serverId,
     message,
     serverTimestamp,
-    messageHash
+    messageHash,
   } = data;
 
   const messageGroupId = message?.group?.id;
@@ -493,7 +493,7 @@ export function initIncomingMessage(data: MessageCreationData): MessageModel {
     direction: 'incoming', // +
     unread: 1, // +
     isPublic, // +
-    messageHash: messageHash || null
+    messageHash: messageHash || null,
   };
 
   return new MessageModel(messageData);
@@ -512,7 +512,7 @@ function createSentMessage(data: MessageCreationData): MessageModel {
     expirationStartTimestamp,
     destination,
     message,
-    messageHash
+    messageHash,
   } = data;
 
   const sentSpecificFields = {
@@ -572,8 +572,6 @@ export async function handleMessageEvent(event: MessageEvent): Promise<void> {
   }
 
   const { message, destination, messageHash } = data;
-
-  console.log({messageHashFromEvent: messageHash});
 
   let { source } = data;
 

@@ -13,7 +13,6 @@ import { MessageModel } from './message';
 import { MessageAttributesOptionals, MessageModelType } from './messageType';
 import autoBind from 'auto-bind';
 import {
-  getMessageBySenderAndTimestamp,
   getMessagesByConversation,
   getUnreadByConversation,
   getUnreadCountByConversation,
@@ -559,9 +558,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: fileName || null,
               thumbnail: thumbnail
                 ? {
-                  ...(await loadAttachmentData(thumbnail)),
-                  objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
-                }
+                    ...(await loadAttachmentData(thumbnail)),
+                    objectUrl: getAbsoluteAttachmentPath(thumbnail.path),
+                  }
                 : null,
             };
           })
@@ -584,9 +583,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
               fileName: null,
               thumbnail: image
                 ? {
-                  ...(await loadAttachmentData(image)),
-                  objectUrl: getAbsoluteAttachmentPath(image.path),
-                }
+                    ...(await loadAttachmentData(image)),
+                    objectUrl: getAbsoluteAttachmentPath(image.path),
+                  }
                 : null,
             };
           })
@@ -715,7 +714,19 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     }
   }
 
-  /** 
+  /**
+   * @param messages Messages to delete
+   */
+  public async deleteMessages(messages: Array<MessageModel>) {
+    const results = await Promise.all(
+      messages.map(async message => {
+        return this.deleteMessage(message, true);
+      })
+    );
+    return _.every(results);
+  }
+
+  /**
    * Deletes message from this device's swarm and handles local deletion of message
    * @param message Message to delete
    * @param removeFromDatabase delete message from the database entirely or just modify the message data
@@ -729,7 +740,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
         await networkDeleteMessages(deletionMessageHashes);
       }
     } catch (e) {
-      window.log?.error('Error deleting message from swarm', e)
+      window.log?.error('Error deleting message from swarm', e);
       return false;
     }
     //#endregion
@@ -740,7 +751,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       await this.removeMessage(message.get('id'));
     } else {
       // just mark the message as deleted but still show in conversation
-      await message.markAsDeleted()
+      await message.markAsDeleted();
       await message.markRead(Date.now());
       this.updateLastMessage();
     }
@@ -748,9 +759,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     return true;
   }
 
-  public async unsendMessages(messages: MessageModel[], onlyDeleteForSender: boolean = false) {
+  public async unsendMessages(messages: Array<MessageModel>, onlyDeleteForSender: boolean = false) {
     const results = await Promise.all(
-      messages.map(message => {
+      messages.map(async message => {
         return this.unsendMessage(message, onlyDeleteForSender);
       })
     );
@@ -766,7 +777,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     onlyDeleteForSender: boolean = false
   ): Promise<boolean> {
     if (!message.get('messageHash')) {
-      console.error(
+      window?.log?.error(
         `message with id ${message.get('id')} cannot find hash: ${message.get('messageHash')}`
       );
       return false;
@@ -784,9 +795,8 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const author = message.get('source');
 
     const timestamp = message.getPropsForMessage().timestamp;
-    console.log({ message });
     if (!timestamp) {
-      console.error('cannot find timestamp - aborting unsend request');
+      window?.log?.error('cannot find timestamp - aborting unsend request');
       return false;
     }
 
@@ -795,28 +805,21 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       author,
     };
 
-    let msgFromDb = await getMessageBySenderAndTimestamp({ source: author, timestamp });
-    console.log({ msgFromDb });
-
     const unsendMessage = new UnsendMessage(unsendParams);
-    console.warn({ unsendMessage });
     //#endregion
 
     //#region sending
     // 1-1 Session
-    // if (!this.isMe() && !this.isGroup()) {
     if (!this.isGroup()) {
-      console.warn('UnsendMesage:: 1-1 conversation');
       // sending to recipient
       getMessageQueue()
         .sendToPubKey(new PubKey(destinationId), unsendMessage)
         .catch(window?.log?.error);
-      return await this.deleteMessage(message);
+      return this.deleteMessage(message);
     }
 
     // closed groups
     if (this.isClosedGroup() && this.id) {
-      console.warn('UnsendMessage:: Sending unsend request to closed group');
       getMessageQueue()
         .sendToGroup(unsendMessage, undefined, PubKey.cast(this.id))
         .catch(window?.log?.error);
@@ -826,7 +829,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
 
     // open groups
     if (this.isOpenGroupV2()) {
-      console.warn('Conversation is open group. Skipping unsend request.');
+      window?.log?.info('Conversation is open group. Skipping unsend request.');
     }
 
     return true;
@@ -867,7 +870,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       received_at: now,
       expireTimer,
       recipients,
-      isDeleted: false
+      isDeleted: false,
     });
 
     if (!this.isPublic()) {
@@ -1384,11 +1387,9 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     return this.get('type') === 'group';
   }
 
-
   public async removeMessage(messageId: any) {
     await dataRemoveMessage(messageId);
     this.updateLastMessage();
-
 
     window.inboxStore?.dispatch(
       conversationActions.messageDeleted({

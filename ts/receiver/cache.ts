@@ -20,7 +20,11 @@ export async function removeFromCache(envelope: EnvelopePlus) {
   return removeUnprocessed(id);
 }
 
-export async function addToCache(envelope: EnvelopePlus, plaintext: ArrayBuffer, messageHash: string) {
+export async function addToCache(
+  envelope: EnvelopePlus,
+  plaintext: ArrayBuffer,
+  messageHash: string
+) {
   const { id } = envelope;
   window?.log?.info(`adding to cache envelope: ${id}`);
 

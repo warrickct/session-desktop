@@ -29,7 +29,7 @@ import { getFocusedSection } from '../state/selectors/section';
 import { ConversationNotificationSettingType } from '../models/conversation';
 
 // tslint:disable-next-line: no-empty-interface
-export interface ConversationListItemProps extends ReduxConversationType { }
+export interface ConversationListItemProps extends ReduxConversationType {}
 
 export const StyledConversationListItemIconWrapper = styled.div`
   svg {
@@ -182,7 +182,7 @@ const MessageItem = (props: {
   unreadCount: number;
   convoId: string;
 }) => {
-  const { lastMessage, isTyping, unreadCount, convoId} = props;
+  const { lastMessage, isTyping, unreadCount, convoId } = props;
 
   if (!lastMessage && !isTyping) {
     return null;
@@ -204,7 +204,13 @@ const MessageItem = (props: {
         {isTyping ? (
           <TypingAnimation />
         ) : (
-          <MessageBody convoId={convoId} isGroup={true} text={text} disableJumbomoji={true} disableLinks={true} />
+          <MessageBody
+            convoId={convoId}
+            isGroup={true}
+            text={text}
+            disableJumbomoji={true}
+            disableLinks={true}
+          />
         )}
       </div>
       {lastMessage && lastMessage.status ? (
@@ -320,7 +326,12 @@ const ConversationListItem = (props: Props) => {
             profileName={profileName}
             currentNotificationSetting={currentNotificationSetting}
           />
-          <MessageItem convoId={conversationId}  isTyping={isTyping} unreadCount={unreadCount} lastMessage={lastMessage} />
+          <MessageItem
+            convoId={conversationId}
+            isTyping={isTyping}
+            unreadCount={unreadCount}
+            lastMessage={lastMessage}
+          />
         </div>
       </div>
       <Portal>

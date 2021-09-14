@@ -83,8 +83,7 @@ export async function sendMessage(
   const isClosedGroup = conversation?.isClosedGroup();
 
   // If message also has a sync message, save that hash. Otherwise save the hash from the regular message send i.e. only closed groups in this case.
-  if (messageIdForHash && 
-    (isSyncMessage || isClosedGroup )) {
+  if (messageIdForHash && (isSyncMessage || isClosedGroup)) {
     console.warn('message contains hash and message --  saving with hash');
     const message = await getMessageById(messageIdForHash);
     if (message) {
