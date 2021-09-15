@@ -782,7 +782,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       );
       return false;
     }
-    const ownPrimaryDevicePubkey = window.storage.get('primaryDevicePubKey');
+    const ownPrimaryDevicePubkey = UserUtils.getOurPubKeyFromCache();
 
     // If deleting just for sender, set destination to sender
     const destinationId = onlyDeleteForSender ? ownPrimaryDevicePubkey : this.id;
@@ -794,6 +794,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //#region building request
     const author = message.get('source');
 
+    // const timestamp = message.get('timestamp');
     const timestamp = message.getPropsForMessage().timestamp;
     if (!timestamp) {
       window?.log?.error('cannot find timestamp - aborting unsend request');

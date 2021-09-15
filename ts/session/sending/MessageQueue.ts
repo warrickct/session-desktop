@@ -93,7 +93,7 @@ export class MessageQueue {
     sentCb?: (message: RawMessage) => Promise<void>,
     groupPubKey?: PubKey
   ): Promise<void> {
-    let destinationPubKey: PubKey | undefined;
+    let destinationPubKey: PubKey | undefined = groupPubKey;
     if (message instanceof ExpirationTimerUpdateMessage || message instanceof ClosedGroupMessage) {
       destinationPubKey = groupPubKey ? groupPubKey : message.groupId;
     }

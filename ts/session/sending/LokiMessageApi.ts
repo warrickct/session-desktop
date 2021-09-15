@@ -88,7 +88,9 @@ export async function sendMessage(
     if (message) {
       await message.updateMessageHash(sendSuccess.successfullSendHash);
       await message.commit();
-      window?.log?.info(`updated message ${message.get('id')} with hash: ${message.get('messageHash')}`);
+      window?.log?.info(
+        `updated message ${message.get('id')} with hash: ${message.get('messageHash')}`
+      );
     }
   }
   window?.log?.info(
