@@ -6,7 +6,6 @@ import { ClosedGroupVisibleMessage } from '../session/messages/outgoing/visibleM
 import { PubKey } from '../session/types';
 import { UserUtils } from '../session/utils';
 import { BlockedNumberController } from '../util';
-import { getMessageController } from '../session/messages';
 import { leaveClosedGroup } from '../session/group';
 import { SignalService } from '../protobuf';
 import { MessageModel } from './message';
@@ -52,6 +51,7 @@ import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsMana
 import { IMAGE_JPEG } from '../types/MIME';
 import { UnsendMessage } from '../session/messages/outgoing/controlMessage/UnsendMessage';
 import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
+import { getLatestTimestampOffset } from '../session/snode_api/SNodeAPI';
 
 export enum ConversationTypeEnum {
   GROUP = 'group',
@@ -860,6 +860,8 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     const editedQuote = _.isEmpty(quote) ? undefined : quote;
     const { upgradeMessageSchema } = window.Signal.Migrations;
 
+    const diffTimestamp = Date.now() - getLatestTimestampOffset();
+
     const messageWithSchema = await upgradeMessageSchema({
       type: 'outgoing',
       body,
@@ -867,7 +869,7 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
       quote: editedQuote,
       preview,
       attachments,
-      sent_at: now,
+      sent_at: diffTimestamp,
       received_at: now,
       expireTimer,
       recipients,
@@ -1070,7 +1072,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     if (setToExpire) {
       await model.setToExpire();
     }
-    getMessageController().register(messageId, model);
     window.inboxStore?.dispatch(
       conversationActions.messageAdded({
         conversationKey: this.id,

@@ -395,6 +395,7 @@ export async function isMessageDuplicate({
         sentAt: timestamp,
       });
     }
+
     if (!result) {
       return false;
     }

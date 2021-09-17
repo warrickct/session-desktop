@@ -37,7 +37,6 @@ export async function toRawMessage(
   message: ContentMessage,
   isGroup = false
 ): Promise<RawMessage> {
-  const timestamp = message.timestamp;
   const ttl = message.ttl();
   const plainTextBuffer = message.plainTextBuffer();
 
@@ -47,7 +46,6 @@ export async function toRawMessage(
   const rawMessage: RawMessage = {
     identifier: message.identifier,
     plainTextBuffer,
-    timestamp,
     device: destinationPubKey.key,
     ttl,
     encryption,
