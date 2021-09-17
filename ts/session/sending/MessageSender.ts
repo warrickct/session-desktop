@@ -92,7 +92,14 @@ export async function send(
         found.set({ sent_at: diffTimestamp });
         await found.commit();
       }
-      await MessageSender.TEST_sendMessageToSnode(device.key, data, ttl, diffTimestamp, isSyncMessage, message.identifier);
+      await MessageSender.TEST_sendMessageToSnode(
+        device.key,
+        data,
+        ttl,
+        diffTimestamp,
+        isSyncMessage,
+        message.identifier
+      );
       return { wrappedEnvelope: data, effectiveTimestamp: diffTimestamp };
     },
     {
@@ -108,8 +115,8 @@ export async function TEST_sendMessageToSnode(
   data: Uint8Array,
   ttl: number,
   timestamp: number,
-  isSyncMessage?:boolean,
-  messageId?: string 
+  isSyncMessage?: boolean,
+  messageId?: string
 ): Promise<void> {
   const data64 = window.dcodeIO.ByteBuffer.wrap(data).toString('base64');
   const swarm = await getSwarmFor(pubKey);
@@ -122,12 +129,12 @@ export async function TEST_sendMessageToSnode(
     timestamp: `${timestamp}`,
     data: data64,
     isSyncMessage,
-    messageId
+    messageId,
   };
 
   const usedNodes = _.slice(swarm, 0, DEFAULT_CONNECTIONS);
 
-  console.warn({params});
+  console.warn({ params });
 
   let successfulSendHash: any;
   const promises = usedNodes.map(async usedNode => {
@@ -148,8 +155,8 @@ export async function TEST_sendMessageToSnode(
 
   let snode;
   try {
-    let firstSuccessSnode = await firstTrue(promises); 
-    console.warn({ firstSuccessSnode});
+    let firstSuccessSnode = await firstTrue(promises);
+    console.warn({ firstSuccessSnode });
     snode = await firstSuccessSnode;
 
     // console.warn({successHash: });

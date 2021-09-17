@@ -412,7 +412,7 @@ export async function TEST_getSnodePoolFromSnode(targetNode: Snode): Promise<Arr
 
 export async function storeOnNode(
   targetNode: Snode,
-  params: SendParams,
+  params: SendParams
 ): Promise<string | null | boolean> {
   try {
     // no retry here. If an issue is with the path this is handled in lokiOnionFetch
@@ -435,7 +435,7 @@ export async function storeOnNode(
 
       const messageHash = parsed.hash;
       if (messageHash) {
-        return messageHash
+        return messageHash;
       }
 
       return true;
@@ -724,7 +724,7 @@ export const networkDeleteMessages = async (hashes: Array<string>): Promise<any>
               method: 'delete',
               params: deleteMessageParams,
               targetNode: snodeToMakeRequestTo,
-              associatedWith: userX25519PublicKey
+              associatedWith: userX25519PublicKey,
             });
             if (!ret) {
               throw new Error(

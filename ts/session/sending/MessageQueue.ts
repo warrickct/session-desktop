@@ -164,7 +164,12 @@ export class MessageQueue {
         // We put the event handling inside this job to avoid sending duplicate events
         const job = async () => {
           try {
-            const { wrappedEnvelope, effectiveTimestamp } = await MessageSender.send(message, undefined, undefined, isSyncMessage);
+            const { wrappedEnvelope, effectiveTimestamp } = await MessageSender.send(
+              message,
+              undefined,
+              undefined,
+              isSyncMessage
+            );
 
             await MessageSentHandler.handleMessageSentSuccess(
               message,
