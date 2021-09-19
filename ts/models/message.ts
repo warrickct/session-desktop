@@ -84,13 +84,25 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
 
   public getMessageModelProps(): MessageModelPropsWithoutConvoProps {
     perfStart(`getPropsMessage-${this.id}`);
+    const propsForDataExtractionNotification = this.getPropsForDataExtractionNotification();
+    const propsForGroupInvitation = this.getPropsForGroupInvitation();
+    const propsForGroupNotification = this.getPropsForGroupNotification();
+    const propsForTimerNotification = this.getPropsForTimerNotification();
     const messageProps: MessageModelPropsWithoutConvoProps = {
       propsForMessage: this.getPropsForMessage(),
-      propsForDataExtractionNotification: this.getPropsForDataExtractionNotification(),
-      propsForGroupInvitation: this.getPropsForGroupInvitation(),
-      propsForGroupNotification: this.getPropsForGroupNotification(),
-      propsForTimerNotification: this.getPropsForTimerNotification(),
     };
+    if (propsForDataExtractionNotification) {
+      messageProps.propsForDataExtractionNotification = propsForDataExtractionNotification;
+    }
+    if (propsForGroupInvitation) {
+      messageProps.propsForGroupInvitation = propsForGroupInvitation;
+    }
+    if (propsForGroupNotification) {
+      messageProps.propsForGroupNotification = propsForGroupNotification;
+    }
+    if (propsForTimerNotification) {
+      messageProps.propsForTimerNotification = propsForTimerNotification;
+    }
     perfEnd(`getPropsMessage-${this.id}`, 'getPropsMessage');
     return messageProps;
   }
@@ -365,8 +377,8 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     return {
-      phoneNumber: pubkey as string,
-      avatarPath: (contactModel ? contactModel.getAvatarPath() : null) as string | null,
+      pubkey: pubkey,
+      avatarPath: contactModel ? contactModel.getAvatarPath() : null,
       name: (contactModel ? contactModel.getName() : null) as string | null,
       profileName: profileName as string | null,
       title: (contactModel ? contactModel.getTitle() : null) as string | null,
@@ -393,7 +405,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
         type: 'add',
         contacts: _.map(
           Array.isArray(groupUpdate.joined) ? groupUpdate.joined : [groupUpdate.joined],
-          phoneNumber => this.findAndFormatContact(phoneNumber)
+          pubkey => this.findAndFormatContact(pubkey)
         ),
       };
       changes.push(change);
@@ -411,7 +423,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
         isMe: false,
         contacts: _.map(
           Array.isArray(groupUpdate.kicked) ? groupUpdate.kicked : [groupUpdate.kicked],
-          phoneNumber => this.findAndFormatContact(phoneNumber)
+          pubkey => this.findAndFormatContact(pubkey)
         ),
       };
       changes.push(change);
@@ -443,7 +455,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
           isMe: false,
           contacts: _.map(
             Array.isArray(groupUpdate.left) ? groupUpdate.left : [groupUpdate.left],
-            phoneNumber => this.findAndFormatContact(phoneNumber)
+            pubkey => this.findAndFormatContact(pubkey)
           ),
         };
         changes.push(change);
@@ -473,11 +485,11 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
 
     // Only return the status on outgoing messages
     if (!this.isOutgoing()) {
-      return null;
+      return undefined;
     }
 
     if (this.isDataExtractionNotification()) {
-      return null;
+      return undefined;
     }
 
     const readBy = this.get('read_by') || [];
@@ -493,6 +505,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     return 'sending';
   }
 
+  // tslint:disable-next-line: cyclomatic-complexity
   public getPropsForMessage(options: any = {}): PropsForMessageWithoutConvoProps {
     const sender = this.getSource();
     const expirationLength = this.get('expireTimer') * 1000;
@@ -502,40 +515,69 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
 
     const attachments = this.get('attachments') || [];
     const isTrustedForAttachmentDownload = this.isTrustedForAttachmentDownload();
-
+    const body = this.get('body');
     const props: PropsForMessageWithoutConvoProps = {
-      text: this.createNonBreakingLastSeparator(this.get('body') || null),
-      id: this.id as string,
+      id: this.id,
       direction: (this.isIncoming() ? 'incoming' : 'outgoing') as MessageModelType,
       timestamp: this.get('sent_at') || 0,
-      receivedAt: this.get('received_at'),
-      serverTimestamp: this.get('serverTimestamp'),
-      serverId: this.get('serverId'),
-      status: this.getMessagePropStatus(),
       authorPhoneNumber: sender,
       convoId: this.get('conversationId'),
-      attachments: attachments
-        .filter((attachment: any) => !attachment.error)
-        .map((attachment: any) => this.getPropsForAttachment(attachment)),
-      previews: this.getPropsForPreview(),
-      quote: this.getPropsForQuote(options),
-      isUnread: this.isUnread(),
-      expirationLength,
-      expirationTimestamp,
-      isExpired: this.isExpired(),
-      isTrustedForAttachmentDownload,
       messageHash: this.get('messageHash') || null,
       isDeleted: this.get('isDeleted') || false,
     };
+    if (body) {
+      props.text = this.createNonBreakingLastSeparator(body);
+    }
+
+    if (this.get('received_at')) {
+      props.receivedAt = this.get('received_at');
+    }
+    if (this.get('serverTimestamp')) {
+      props.serverTimestamp = this.get('serverTimestamp');
+    }
+    if (this.get('serverId')) {
+      props.serverId = this.get('serverId');
+    }
+    if (expirationLength) {
+      props.expirationLength = expirationLength;
+    }
+    if (expirationTimestamp) {
+      props.expirationTimestamp = expirationTimestamp;
+    }
+    if (isTrustedForAttachmentDownload) {
+      props.isTrustedForAttachmentDownload = isTrustedForAttachmentDownload;
+    }
+    const isUnread = this.isUnread();
+    if (isUnread) {
+      props.isUnread = isUnread;
+    }
+    const isExpired = this.isExpired();
+    if (isExpired) {
+      props.isExpired = isExpired;
+    }
+    const previews = this.getPropsForPreview();
+    if (previews && previews.length) {
+      props.previews = previews;
+    }
+    const quote = this.getPropsForQuote(options);
+    if (quote) {
+      props.quote = quote;
+    }
+    const status = this.getMessagePropStatus();
+    if (status) {
+      props.status = status;
+    }
+    const attachmentsProps = attachments
+      .filter((attachment: any) => !attachment.error)
+      .map((attachment: any) => this.getPropsForAttachment(attachment));
+    if (attachmentsProps && attachmentsProps.length) {
+      props.attachments = attachmentsProps;
+    }
 
     return props;
   }
 
-  public createNonBreakingLastSeparator(text: string | null) {
-    if (!text) {
-      return null;
-    }
-
+  public createNonBreakingLastSeparator(text: string) {
     const nbsp = '\xa0';
     const regex = /(\S)( +)(\S+\s*)$/;
     return text.replace(regex, (_match, start, spaces, end) => {
@@ -557,9 +599,9 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       !path && !objectUrl
         ? null
         : // tslint:disable: prefer-object-spread
-          Object.assign({}, attachment.thumbnail || {}, {
-            objectUrl: path || objectUrl,
-          });
+        Object.assign({}, attachment.thumbnail || {}, {
+          objectUrl: path || objectUrl,
+        });
 
     return Object.assign({}, attachment, {
       isVoiceMessage: window.Signal.Types.Attachment.isVoiceMessage(attachment),
@@ -568,8 +610,12 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     // tslint:enable: prefer-object-spread
   }
 
-  public getPropsForPreview() {
-    const previews = this.get('preview') || [];
+  public getPropsForPreview(): Array<any> | null {
+    const previews = this.get('preview') || null;
+
+    if (!previews || previews.length === 0) {
+      return null;
+    }
 
     return previews.map((preview: any) => {
       let image: PropsForAttachment | null = null;
@@ -604,16 +650,44 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     const isFromMe = contact ? contact.id === UserUtils.getOurPubKeyStrFromCache() : false;
 
     const firstAttachment = quote.attachments && quote.attachments[0];
-
-    return {
-      text: this.createNonBreakingLastSeparator(quote.text),
-      attachment: firstAttachment ? this.processQuoteAttachment(firstAttachment) : null,
-      isFromMe,
+    const quoteProps: {
+      referencedMessageNotFound?: boolean;
+      authorPhoneNumber: string;
+      messageId: string;
+      authorName: string;
+      text?: string;
+      attachment?: any;
+      isFromMe?: boolean;
+    } = {
       authorPhoneNumber: author,
       messageId: id,
       authorName,
-      referencedMessageNotFound,
     };
+
+    if (referencedMessageNotFound) {
+      quoteProps.referencedMessageNotFound = true;
+    }
+
+    if (!referencedMessageNotFound) {
+      if (quote.text) {
+        // do not show text of not found messages.
+        // if the message was deleted better not show it's text content in the message
+        quoteProps.text = this.createNonBreakingLastSeparator(quote.text);
+      }
+
+      const quoteAttachment = firstAttachment
+        ? this.processQuoteAttachment(firstAttachment)
+        : undefined;
+      if (quoteAttachment) {
+        // only set attachment if referencedMessageNotFound is false and we have one
+        quoteProps.attachment = quoteAttachment;
+      }
+    }
+    if (isFromMe) {
+      quoteProps.isFromMe = true;
+    }
+
+    return quoteProps;
   }
 
   public getPropsForAttachment(attachment: AttachmentTypeWithPath): PropsForAttachment | null {
@@ -654,15 +728,15 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       url: path ? window.Signal.Migrations.getAbsoluteAttachmentPath(path) : null,
       screenshot: screenshot
         ? {
-            ...screenshot,
-            url: window.Signal.Migrations.getAbsoluteAttachmentPath(screenshot.path),
-          }
+          ...screenshot,
+          url: window.Signal.Migrations.getAbsoluteAttachmentPath(screenshot.path),
+        }
         : null,
       thumbnail: thumbnail
         ? {
-            ...thumbnail,
-            url: window.Signal.Migrations.getAbsoluteAttachmentPath(thumbnail.path),
-          }
+          ...thumbnail,
+          url: window.Signal.Migrations.getAbsoluteAttachmentPath(thumbnail.path),
+        }
         : null,
     };
   }
@@ -674,9 +748,9 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     const phoneNumbers = this.isIncoming()
       ? [this.get('source')]
       : _.union(
-          this.get('sent_to') || [],
-          this.get('recipients') || this.getConversation()?.getRecipients() || []
-        );
+        this.get('sent_to') || [],
+        this.get('recipients') || this.getConversation()?.getRecipients() || []
+      );
 
     // This will make the error message for outgoing key errors a bit nicer
     const allErrors = (this.get('errors') || []).map((error: any) => {
@@ -710,7 +784,7 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     //   first; otherwise it's alphabetical
     const sortedContacts = _.sortBy(
       finalContacts,
-      contact => `${contact.isPrimaryDevice ? '0' : '1'}${contact.phoneNumber}`
+      contact => `${contact.isPrimaryDevice ? '0' : '1'}${contact.pubkey}`
     );
     const toRet: MessagePropsDetails = {
       sentAt: this.get('sent_at') || 0,
@@ -1163,6 +1237,6 @@ const trotthledAllMessagesDispatch = _.throttle(() => {
 }, 1000);
 
 const updatesToDispatch: Map<string, MessageModelPropsWithoutConvoProps> = new Map();
-export class MessageCollection extends Backbone.Collection<MessageModel> {}
+export class MessageCollection extends Backbone.Collection<MessageModel> { }
 
 MessageCollection.prototype.model = MessageModel;
