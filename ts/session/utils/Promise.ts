@@ -223,6 +223,5 @@ export const firstTrue = async (ps: Array<Promise<any>>) => {
   );
   // eslint-disable-next-line more/no-then
   newPs.push(Promise.all(ps).then(() => false));
-  // return Promise.race(newPs) as Promise<{ usedNode: Snode; successfullSendHash: string }>;
   return Promise.race(newPs) as Promise<Snode>;
 };

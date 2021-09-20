@@ -39,11 +39,6 @@ interface ReqOptions {
 const incomingMessagePromises: Array<Promise<any>> = [];
 
 async function handleEnvelope(envelope: EnvelopePlus, messageHash?: string) {
-  // TODO: enable below
-
-  // if (this.stoppingProcessing) {
-  //   return Promise.resolve();
-  // }
 
   if (envelope.content && envelope.content.length > 0) {
     return handleContentMessage(envelope, messageHash);

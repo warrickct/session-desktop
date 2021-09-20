@@ -522,11 +522,17 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       timestamp: this.get('sent_at') || 0,
       authorPhoneNumber: sender,
       convoId: this.get('conversationId'),
-      messageHash: this.get('messageHash') || null,
-      isDeleted: this.get('isDeleted') || false,
     };
     if (body) {
       props.text = this.createNonBreakingLastSeparator(body);
+    }
+
+    if (this.get('messageHash')) {
+      props.messageHash = this.get('messageHash')
+    }
+
+    if (this.get('messageHash')) {
+      props.isDeleted = this.get('isDeleted')
     }
 
     if (this.get('received_at')) {
@@ -860,7 +866,15 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     this.set({
       isDeleted: true,
       body: window.i18n('messageDeleted'),
+      quote: undefined,
+      groupInvitation: undefined,
+      dataExtractionNotification: undefined,
+      hasAttachments: false,
+      hasVisualMediaAttachments: false,
+      attachments: undefined,
+      preview: undefined, 
     });
+    this.markRead(Date.now());
     await this.commit();
   }
 

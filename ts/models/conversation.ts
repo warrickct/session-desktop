@@ -871,7 +871,6 @@ export class ConversationModel extends Backbone.Model<ConversationAttributes> {
     //#region building request
     const author = message.get('source');
 
-    // const timestamp = message.get('timestamp');
     const timestamp = message.getPropsForMessage().timestamp;
     if (!timestamp) {
       window?.log?.error('cannot find timestamp - aborting unsend request');

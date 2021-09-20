@@ -690,7 +690,7 @@ export const networkDeleteMessages = async (hashes: Array<string>): Promise<any>
   const userED25519KeyPair = await UserUtils.getUserED25519KeyPair();
 
   if (!userED25519KeyPair) {
-    window?.log?.warn('Cannot forceNetworkDeletion, did not find user ed25519 key.');
+    window?.log?.warn('Cannot networkDeleteMessages, did not find user ed25519 key.');
     return null;
   }
   const edKeyPriv = userED25519KeyPair.privKey;
@@ -703,7 +703,7 @@ export const networkDeleteMessages = async (hashes: Array<string>): Promise<any>
         const edKeyPrivBytes = fromHexToArray(edKeyPriv);
 
         if (!snodeToMakeRequestTo) {
-          window?.log?.warn('Cannot forceNetworkDeletion, without a valid swarm node.');
+          window?.log?.warn('Cannot networkDeleteMessages, without a valid swarm node.');
           return null;
         }
 

@@ -183,7 +183,7 @@ const MessageItem = (props: {
   unreadCount: number;
   convoId: string;
 }) => {
-  const { lastMessage, isTyping, unreadCount, convoId } = props;
+  const { lastMessage, isTyping, unreadCount } = props;
 
   if (!lastMessage && !isTyping) {
     return null;
@@ -206,7 +206,6 @@ const MessageItem = (props: {
           <TypingAnimation />
         ) : (
           <MessageBody
-            convoId={convoId}
             isGroup={true}
             text={text}
             disableJumbomoji={true}

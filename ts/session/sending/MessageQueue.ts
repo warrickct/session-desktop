@@ -235,7 +235,6 @@ export class MessageQueue {
       }
     }
 
-    // WW: TODO: Might need to add to sendCache for sending sync messages as well.
     await this.pendingMessageCache.add(destinationPk, message, sentCb, isGroup);
     void this.processPending(destinationPk, isSyncMessage);
   }

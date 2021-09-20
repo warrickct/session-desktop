@@ -180,8 +180,8 @@ export type PropsForMessageWithoutConvoProps = {
     messageId?: string;
     referencedMessageNotFound?: boolean;
   } | null;
-  messageHash: string | null;
-  isDeleted: boolean | undefined;
+  messageHash?: string;
+  isDeleted?: boolean;
   isUnread?: boolean;
   expirationLength?: number;
   expirationTimestamp?: number | null;

@@ -8,12 +8,10 @@ interface UnsendMessageParams extends MessageParams {
 }
 
 export class UnsendMessage extends ContentMessage {
-  // public readonly timestamp: number;
   private readonly author: string;
 
   constructor(params: UnsendMessageParams) {
     super({ timestamp: params.timestamp, author: params.author } as MessageParams);
-    // this.timestamp = params.timestamp;
     this.author = params.author;
   }
 
@@ -24,10 +22,6 @@ export class UnsendMessage extends ContentMessage {
   }
 
   public unsendProto(): SignalService.Unsend {
-    // const unsendMessage = new SignalService.UnsendRequest({
-    //   timestamp: this.timestamp,
-    //   author: this.author,
-    // });
 
     return new SignalService.Unsend({
       timestamp: this.timestamp,

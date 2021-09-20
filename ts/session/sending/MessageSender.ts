@@ -19,7 +19,6 @@ import { firstTrue } from '../utils/Promise';
 import { MessageSender } from '.';
 import { getConversationById, getMessageById } from '../../../ts/data/data';
 import { SNodeAPI } from '../snode_api';
-// import { getConversationById, getMessageById } from '../../../ts/data/data';
 
 const DEFAULT_CONNECTIONS = 3;
 
