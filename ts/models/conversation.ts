@@ -49,8 +49,7 @@ import { ed25519Str } from '../session/onions/onionPath';
 import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsManager';
 import { IMAGE_JPEG } from '../types/MIME';
 import { UnsendMessage } from '../session/messages/outgoing/controlMessage/UnsendMessage';
-import { networkDeleteMessages } from '../session/snode_api/SNodeAPI';
-import { getLatestTimestampOffset } from '../session/snode_api/SNodeAPI';
+import { getLatestTimestampOffset, networkDeleteMessages } from '../session/snode_api/SNodeAPI';
 
 export enum ConversationTypeEnum {
   GROUP = 'group',

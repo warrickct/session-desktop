@@ -441,7 +441,6 @@ export async function deleteMessagesById(
   conversationId: string,
   askUserForConfirmation: boolean
 ) {
-  const IS_UNSEND_REQUEST_ENABLED = true;
   const conversation = getConversationController().getOrThrow(conversationId);
   const selectedMessages = _.compact(
     await Promise.all(messageIds.map(m => getMessageById(m, false)))
@@ -491,7 +490,7 @@ export async function deleteMessagesById(
         return;
       }
 
-      if (IS_UNSEND_REQUEST_ENABLED) {
+      if (window.lokiFeatureFlags?.useUnsendRequests) {
         if (deleteForEveryone) {
           void deleteForAll(selectedMessages);
         } else {

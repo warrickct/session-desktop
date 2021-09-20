@@ -17,9 +17,9 @@ import { storeOnNode } from '../snode_api/SNodeAPI';
 import { getSwarmFor } from '../snode_api/snodePool';
 import { firstTrue } from '../utils/Promise';
 import { MessageSender } from '.';
-import * as Data from '../../../ts/data/data';
-import { SNodeAPI } from '../snode_api';
 import { getConversationById, getMessageById } from '../../../ts/data/data';
+import { SNodeAPI } from '../snode_api';
+// import { getConversationById, getMessageById } from '../../../ts/data/data';
 
 const DEFAULT_CONNECTIONS = 3;
 
@@ -93,7 +93,7 @@ export async function send(
       // make sure to update the local sent_at timestamp, because sometimes, we will get the just pushed message in the receiver side
       // before we return from the await below.
       // and the isDuplicate messages relies on sent_at timestamp to be valid.
-      const found = await Data.getMessageById(message.identifier);
+      const found = await getMessageById(message.identifier);
 
       // make sure to not update the send timestamp if this a currently syncing message
       if (found && !found.get('sentSync')) {
@@ -142,8 +142,6 @@ export async function TEST_sendMessageToSnode(
 
   const usedNodes = _.slice(swarm, 0, DEFAULT_CONNECTIONS);
 
-  console.warn({ params });
-
   let successfulSendHash: any;
   const promises = usedNodes.map(async usedNode => {
     // TODO: Revert back to using snode address instead of IP
@@ -163,9 +161,8 @@ export async function TEST_sendMessageToSnode(
 
   let snode;
   try {
-    let firstSuccessSnode = await firstTrue(promises);
-    console.warn({ firstSuccessSnode });
-    snode = await firstSuccessSnode;
+    const firstSuccessSnode = await firstTrue(promises);
+    snode = firstSuccessSnode;
 
     // console.warn({successHash: });
   } catch (e) {
