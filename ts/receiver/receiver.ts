@@ -39,7 +39,6 @@ interface ReqOptions {
 const incomingMessagePromises: Array<Promise<any>> = [];
 
 async function handleEnvelope(envelope: EnvelopePlus, messageHash?: string) {
-
   if (envelope.content && envelope.content.length > 0) {
     return handleContentMessage(envelope, messageHash);
   }

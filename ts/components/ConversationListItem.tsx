@@ -205,12 +205,7 @@ const MessageItem = (props: {
         {isTyping ? (
           <TypingAnimation />
         ) : (
-          <MessageBody
-            isGroup={true}
-            text={text}
-            disableJumbomoji={true}
-            disableLinks={true}
-          />
+          <MessageBody isGroup={true} text={text} disableJumbomoji={true} disableLinks={true} />
         )}
       </div>
       {lastMessage && lastMessage.status ? (

@@ -528,11 +528,11 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
     }
 
     if (this.get('messageHash')) {
-      props.messageHash = this.get('messageHash')
+      props.messageHash = this.get('messageHash');
     }
 
-    if (this.get('messageHash')) {
-      props.isDeleted = this.get('isDeleted')
+    if (this.get('isDeleted')) {
+      props.isDeleted = this.get('isDeleted');
     }
 
     if (this.get('received_at')) {
@@ -872,9 +872,9 @@ export class MessageModel extends Backbone.Model<MessageAttributes> {
       hasAttachments: false,
       hasVisualMediaAttachments: false,
       attachments: undefined,
-      preview: undefined, 
+      preview: undefined,
     });
-    this.markRead(Date.now());
+    await this.markRead(Date.now());
     await this.commit();
   }
 

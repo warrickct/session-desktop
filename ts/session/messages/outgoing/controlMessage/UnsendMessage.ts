@@ -22,7 +22,6 @@ export class UnsendMessage extends ContentMessage {
   }
 
   public unsendProto(): SignalService.Unsend {
-
     return new SignalService.Unsend({
       timestamp: this.timestamp,
       author: this.author,

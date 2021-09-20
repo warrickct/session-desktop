@@ -146,12 +146,7 @@ export const GenericReadableMessage = (props: Props) => {
     isUnread,
     expirationLength,
     expirationTimestamp,
-    // isDeleted// TODO: Re-implement if message is not supposed to be rendered at all?
   } = msgProps;
-
-  // if (isDeleted) {
-  //   return null;
-  // }
 
   if (isExpired) {
     return null;
