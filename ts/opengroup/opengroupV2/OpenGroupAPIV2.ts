@@ -294,6 +294,7 @@ export const unbanUser = async (
   };
   const unbanResult = await exports.sendApiV2Request(request);
   const isOk = parseStatusCodeFromOnionRequest(unbanResult) === 200;
+  debugger;
   return isOk;
 };
 

@@ -38,6 +38,7 @@ import {
 import { SessionButtonColor } from '../SessionButton';
 import { getTimerOptions } from '../../../state/selectors/timerOptions';
 import { ToastUtils } from '../../../session/utils';
+import { MessageInteraction } from '../../../interactions';
 
 const maxNumberOfPinnedConversations = 5;
 
@@ -84,6 +85,10 @@ function showDeleteContact(
   // you need to have left a closed group first to be able to delete it completely.
   return !isGroup || (isGroup && (isGroupLeft || isKickedFromGroup || isPublic));
 }
+
+const showUnbanUser = (isAdmin: boolean, isPublic: boolean, isKickedFromGroup: boolean) => {
+  return !isKickedFromGroup && isAdmin && isPublic;
+};
 
 function showAddModerators(
   isAdmin: boolean,
@@ -328,6 +333,29 @@ export function getAddModeratorsMenuItem(
       </Item>
     );
   }
+  return null;
+}
+
+export function getUnbanMenuItem(
+  isAdmin: boolean | undefined,
+  isPublic: boolean | undefined,
+  isKickedFromGroup: boolean | undefined,
+  conversationId: string
+): JSX.Element | null {
+  if (showUnbanUser(Boolean(isAdmin), Boolean(isPublic), Boolean(isKickedFromGroup))) {
+    return (
+      <Item
+        onClick={() => {
+          // TODO: unban hardcoded id.
+          console.warn('unbanning user');
+          MessageInteraction.unbanUser('unban id here', conversationId);
+        }}
+      >
+        {'Unban User'}
+      </Item>
+    );
+  }
+  // TODO: translations
   return null;
 }
 

@@ -17,6 +17,7 @@ import {
   getRemoveModeratorsMenuItem,
   getShowUserDetailsMenuItem,
   getStartCallMenuItem,
+  getUnbanMenuItem,
   getUpdateGroupNameMenuItem,
 } from './Menu';
 import _ from 'lodash';
@@ -81,6 +82,7 @@ const ConversationHeaderMenu = (props: PropsConversationHeaderMenu) => {
       {getDeleteMessagesMenuItem(conversationId)}
       {getAddModeratorsMenuItem(weAreAdmin, isPublic, isKickedFromGroup, conversationId)}
       {getRemoveModeratorsMenuItem(weAreAdmin, isPublic, isKickedFromGroup, conversationId)}
+      {getUnbanMenuItem(weAreAdmin, isPublic, isKickedFromGroup, conversationId)}
       {getUpdateGroupNameMenuItem(weAreAdmin, isKickedFromGroup, left, conversationId)}
       {getLeaveGroupMenuItem(isKickedFromGroup, left, isGroup, isPublic, conversationId)}
       {getInviteContactMenuItem(isGroup, isPublic, conversationId)}
