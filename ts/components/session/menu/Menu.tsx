@@ -29,16 +29,17 @@ import {
   setDisappearingMessagesByConvoId,
   setNotificationForConvoId,
   showAddModeratorsByConvoId,
+  showBanUserByConvoId,
   showInviteContactByConvoId,
   showLeaveGroupByConvoId,
   showRemoveModeratorsByConvoId,
+  showUnbanUserByConvoId,
   showUpdateGroupNameByConvoId,
   unblockConvoById,
 } from '../../../interactions/conversationInteractions';
 import { SessionButtonColor } from '../SessionButton';
 import { getTimerOptions } from '../../../state/selectors/timerOptions';
 import { ToastUtils } from '../../../session/utils';
-import { MessageInteraction } from '../../../interactions';
 
 const maxNumberOfPinnedConversations = 5;
 
@@ -87,6 +88,10 @@ function showDeleteContact(
 }
 
 const showUnbanUser = (isAdmin: boolean, isPublic: boolean, isKickedFromGroup: boolean) => {
+  return !isKickedFromGroup && isAdmin && isPublic;
+};
+
+const showBanUser = (isAdmin: boolean, isPublic: boolean, isKickedFromGroup: boolean) => {
   return !isKickedFromGroup && isAdmin && isPublic;
 };
 
@@ -346,16 +351,34 @@ export function getUnbanMenuItem(
     return (
       <Item
         onClick={() => {
-          // TODO: unban hardcoded id.
-          console.warn('unbanning user');
-          MessageInteraction.unbanUser('unban id here', conversationId);
+          showUnbanUserByConvoId(conversationId);
         }}
       >
-        {'Unban User'}
+        {window.i18n('unbanUser')}
       </Item>
     );
   }
   // TODO: translations
+  return null;
+}
+
+export function getBanMenuItem(
+  isAdmin: boolean | undefined,
+  isPublic: boolean | undefined,
+  isKickedFromGroup: boolean | undefined,
+  conversationId: string
+): JSX.Element | null {
+  if (showBanUser(Boolean(isAdmin), Boolean(isPublic), Boolean(isKickedFromGroup))) {
+    return (
+      <Item
+        onClick={() => {
+          showBanUserByConvoId(conversationId);
+        }}
+      >
+        {window.i18n('banUser')}
+      </Item>
+    );
+  }
   return null;
 }
 

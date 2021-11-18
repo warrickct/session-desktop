@@ -88,12 +88,6 @@ export const MessageContextMenu = (props: Props) => {
     }, 100);
   }, []);
 
-  // unsure if this will make a difference.
-  // Skips calculating menu logic if it's not shown since this component updates a lot.
-  if (!window.contextMenuShown) {
-    return null;
-  }
-
   const onShowDetail = async () => {
     const found = await getMessageById(messageId);
     if (found) {
