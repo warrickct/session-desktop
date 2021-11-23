@@ -7,6 +7,7 @@ import {
 } from '../../../models/conversation';
 
 import {
+  getBanMenuItem,
   getBlockMenuItem,
   getChangeNicknameMenuItem,
   getClearNicknameMenuItem,
@@ -19,6 +20,7 @@ import {
   getNotificationForConvoMenuItem,
   getPinConversationMenuItem,
   getShowUserDetailsMenuItem,
+  getUnbanMenuItem,
 } from './Menu';
 
 export type PropsContextConversationItem = {
@@ -37,6 +39,7 @@ export type PropsContextConversationItem = {
   name: string | undefined;
   profileName: string | undefined;
   avatarPath: string | null;
+  weAreAdmin?: boolean;
 };
 
 const ConversationListItemContextMenu = (props: PropsContextConversationItem) => {
@@ -55,6 +58,7 @@ const ConversationListItemContextMenu = (props: PropsContextConversationItem) =>
     name,
     profileName,
     avatarPath,
+    weAreAdmin,
   } = props;
 
   const isGroup = type === 'group';
@@ -77,6 +81,8 @@ const ConversationListItemContextMenu = (props: PropsContextConversationItem) =>
       {getChangeNicknameMenuItem(isMe, isGroup, conversationId)}
       {getClearNicknameMenuItem(isMe, hasNickname, isGroup, conversationId)}
       {getDeleteMessagesMenuItem(conversationId)}
+      {getBanMenuItem(weAreAdmin, isPublic, isKickedFromGroup, conversationId)}
+      {getUnbanMenuItem(weAreAdmin, isPublic, isKickedFromGroup, conversationId)}
       {getInviteContactMenuItem(isGroup, isPublic, conversationId)}
       {getDeleteContactMenuItem(isGroup, isPublic, left, isKickedFromGroup, conversationId)}
       {getLeaveGroupMenuItem(isKickedFromGroup, left, isGroup, isPublic, conversationId)}

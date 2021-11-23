@@ -274,6 +274,7 @@ const ConversationListItem = (props: Props) => {
     avatarPath,
     isPrivate,
     currentNotificationSetting,
+    weAreAdmin,
   } = props;
   const triggerId = `conversation-item-${conversationId}-ctxmenu`;
   const key = `conversation-item-${conversationId}`;
@@ -359,6 +360,7 @@ const ConversationListItem = (props: Props) => {
           avatarPath={avatarPath || null}
           name={name}
           profileName={profileName}
+          weAreAdmin={weAreAdmin}
         />
       </Portal>
     </div>
