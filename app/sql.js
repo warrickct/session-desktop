@@ -835,6 +835,7 @@ const LOKI_SCHEMA_VERSIONS = [
   updateToLokiSchemaVersion14,
   updateToLokiSchemaVersion15,
   updateToLokiSchemaVersion16,
+  updateToLokiSchemaVersion17,
 ];
 
 function updateToLokiSchemaVersion1(currentVersion, db) {
@@ -1225,6 +1226,66 @@ function updateToLokiSchemaVersion16(currentVersion, db) {
 
     writeLokiSchemaVersion(targetVersion, db);
   })();
+  console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
+}
+
+function updateToLokiSchemaVersion17(currentVersion, db) {
+  const targetVersion = 17;
+  // if (currentVersion >= targetVersion) {
+  //   return;
+  // }
+  console.log(`updateToLokiSchemaVersion${targetVersion}: starting...`);
+
+  // Dropping all pre-existing schema relating to message searching.
+  // Re-migrating everything
+  db.transaction(() => {
+    db.exec(`
+      DROP TRIGGER IF EXISTS messages_on_insert;
+      DROP TRIGGER IF EXISTS messages_on_delete;
+      DROP TRIGGER IF EXISTS messages_on_update;
+      DROP TABLE IF EXISTS ${MESSAGES_FTS_TABLE};
+    `);
+
+    writeLokiSchemaVersion(targetVersion, db);
+  })();
+
+  db.transaction(() => {
+    db.exec(`
+    -- Then we create our full-text search table and populate it
+    CREATE VIRTUAL TABLE ${MESSAGES_FTS_TABLE}
+      USING fts5(id UNINDEXED, body);
+
+    INSERT INTO ${MESSAGES_FTS_TABLE}(id, body)
+      SELECT id, body FROM ${MESSAGES_TABLE};
+
+    -- Then we set up triggers to keep the full-text search table up to date
+    CREATE TRIGGER messages_on_insert AFTER INSERT ON ${MESSAGES_TABLE} BEGIN
+      INSERT INTO ${MESSAGES_FTS_TABLE} (
+        id,
+        body
+      ) VALUES (
+        new.id,
+        new.body
+      );
+    END;
+    CREATE TRIGGER messages_on_delete AFTER DELETE ON ${MESSAGES_TABLE} BEGIN
+      DELETE FROM ${MESSAGES_FTS_TABLE} WHERE id = old.id;
+    END;
+    CREATE TRIGGER messages_on_update AFTER UPDATE ON ${MESSAGES_TABLE} BEGIN
+      DELETE FROM ${MESSAGES_FTS_TABLE} WHERE id = old.id;
+      INSERT INTO ${MESSAGES_FTS_TABLE}(
+        id,
+        body
+      ) VALUES (
+        new.id,
+        new.body
+      );
+    END;
+    `);
+
+    writeLokiSchemaVersion(targetVersion, db);
+  })();
+
   console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
 }
 
