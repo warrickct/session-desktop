@@ -16,6 +16,9 @@ export type SearchStateType = {
   // For conversations we store just the id, and pull conversation props in the selector
   conversations: Array<string>;
   contacts: Array<string>;
+
+  messages?: Array<any>;
+  messagesLookup?: any;
 };
 
 // Actions
@@ -24,6 +27,7 @@ type SearchResultsPayloadType = {
   normalizedPhoneNumber?: string;
   conversations: Array<string>;
   contacts: Array<string>;
+  messages?: Array<any>;
 };
 
 type SearchResultsKickoffActionType = {
@@ -94,6 +98,7 @@ async function doSearch(query: string, options: SearchOptions): Promise<SearchRe
     normalizedPhoneNumber: PubKey.normalize(query),
     conversations,
     contacts,
+    messages: filteredMessages,
   };
 }
 export function clearSearch(): ClearSearchActionType {
@@ -247,6 +252,8 @@ export const initialSearchState: SearchStateType = {
   query: '',
   conversations: [],
   contacts: [],
+  messages: [],
+  messagesLookup: {},
 };
 
 function getEmptyState(): SearchStateType {
@@ -274,7 +281,7 @@ export function reducer(state: SearchStateType | undefined, action: SEARCH_TYPES
 
   if (action.type === 'SEARCH_RESULTS_FULFILLED') {
     const { payload } = action;
-    const { query, normalizedPhoneNumber, conversations, contacts } = payload;
+    const { query, normalizedPhoneNumber, conversations, contacts, messages } = payload;
 
     // Reject if the associated query is not the most recent user-provided query
     if (state.query !== query) {
@@ -287,6 +294,7 @@ export function reducer(state: SearchStateType | undefined, action: SEARCH_TYPES
       normalizedPhoneNumber,
       conversations,
       contacts,
+      messages,
     };
   }
 

@@ -198,6 +198,7 @@ export class LeftPaneMessageSection extends React.Component<Props, State> {
       return;
     }
 
+    console.warn({ cleanedTerm });
     this.debouncedSearch(cleanedTerm);
   }
 
