@@ -31,7 +31,6 @@ import {
   getSelectedConversation,
   isRightPanelShowing,
 } from '../../../state/selectors/conversations';
-import { useMembersAvatars } from '../../../hooks/useMembersAvatar';
 import { closeRightPanel } from '../../../state/ducks/conversations';
 
 async function getMediaGalleryProps(
@@ -110,42 +109,25 @@ async function getMediaGalleryProps(
 const HeaderItem = () => {
   const selectedConversation = useSelector(getSelectedConversation);
   const dispatch = useDispatch();
-  const memberDetails = useMembersAvatars(selectedConversation);
 
   if (!selectedConversation) {
     return null;
   }
-  const {
-    avatarPath,
-    id,
-    isGroup,
-    isKickedFromGroup,
-    profileName,
-    isBlocked,
-    left,
-    name,
-  } = selectedConversation;
+  const { id, isGroup, isKickedFromGroup, isBlocked, left } = selectedConversation;
 
   const showInviteContacts = isGroup && !isKickedFromGroup && !isBlocked && !left;
-  const userName = name || profileName || id;
 
   return (
     <div className="group-settings-header">
       <SessionIconButton
         iconType="chevron"
-        iconSize={'medium'}
+        iconSize="medium"
         iconRotation={270}
         onClick={() => {
           dispatch(closeRightPanel());
         }}
       />
-      <Avatar
-        avatarPath={avatarPath || ''}
-        name={userName}
-        size={AvatarSize.XL}
-        memberAvatars={memberDetails}
-        pubkey={id}
-      />
+      <Avatar size={AvatarSize.XL} pubkey={id} />
       <div className="invite-friends-container">
         {showInviteContacts && (
           <SessionIconButton
@@ -262,7 +244,7 @@ export const SessionRightPanelWithDetails = () => {
         <>
           <SpacerLG />
           <div role="button" className="subtle">
-            {window.i18n('members', subscriberCount)}
+            {window.i18n('members', [`${subscriberCount}`])}
           </div>
           <SpacerLG />
         </>

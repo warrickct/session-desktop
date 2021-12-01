@@ -11,9 +11,9 @@ export const DataExtractionNotification = (props: PropsForDataExtractionNotifica
 
   let contentText: string;
   if (type === SignalService.DataExtractionNotification.Type.MEDIA_SAVED) {
-    contentText = window.i18n('savedTheFile', name || source);
+    contentText = window.i18n('savedTheFile', [name || source]);
   } else {
-    contentText = window.i18n('tookAScreenshot', name || source);
+    contentText = window.i18n('tookAScreenshot', [name || source]);
   }
 
   return (
@@ -31,7 +31,7 @@ export const DataExtractionNotification = (props: PropsForDataExtractionNotifica
         margin={'var(--margins-sm)'}
         id={`msg-${messageId}`}
       >
-        <SessionIcon iconType="upload" iconSize={'small'} iconRotation={180} />
+        <SessionIcon iconType="upload" iconSize="small" iconRotation={180} />
         <SpacerSM />
         <Text text={contentText} subtle={true} />
       </Flex>

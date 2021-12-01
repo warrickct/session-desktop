@@ -39,6 +39,7 @@ const RestoreUsingRecoveryPhraseButton = (props: { onRecoveryButtonClicked: () =
       buttonType={SessionButtonType.BrandOutline}
       buttonColor={SessionButtonColor.Green}
       text={window.i18n('restoreUsingRecoveryPhrase')}
+      dataTestId="restore-using-recovery"
     />
   );
 };
@@ -97,7 +98,7 @@ export const SignInTab = () => {
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
   const [recoveryPhraseError, setRecoveryPhraseError] = useState(undefined as string | undefined);
   const [displayName, setDisplayName] = useState('');
-  const [displayNameError, setDisplayNameError] = useState('');
+  const [displayNameError, setDisplayNameError] = useState<string | undefined>('');
   const [loading, setIsLoading] = useState(false);
 
   const isRecovery = signInMode === SignInMode.UsingRecoveryPhrase;

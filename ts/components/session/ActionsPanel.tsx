@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SessionIconButton, SessionIconType } from './icon';
+import { SessionIconButton } from './icon';
 import { Avatar, AvatarSize } from '../Avatar';
 import { SessionToastContainer } from './SessionToastContainer';
 import { getConversationController } from '../../session/conversations';
@@ -50,11 +50,11 @@ import { DraggableCallContainer } from './calling/DraggableCallContainer';
 import { IncomingCallDialog } from './calling/IncomingCallDialog';
 import { CallInFullScreenContainer } from './calling/CallInFullScreenContainer';
 
-const Section = (props: { type: SectionType; avatarPath?: string | null }) => {
+const Section = (props: { type: SectionType }) => {
   const ourNumber = useSelector(getOurNumber);
   const unreadMessageCount = useSelector(getUnreadMessageCount);
   const dispatch = useDispatch();
-  const { type, avatarPath } = props;
+  const { type } = props;
 
   const focusedSection = useSelector(getFocusedSection);
   const isSelected = focusedSection === props.type;
@@ -85,58 +85,76 @@ const Section = (props: { type: SectionType; avatarPath?: string | null }) => {
   };
 
   if (type === SectionType.Profile) {
-    const conversation = getConversationController().get(ourNumber);
-
-    const profile = conversation?.getLokiProfile();
-    const userName = (profile && profile.displayName) || ourNumber;
     return (
       <Avatar
-        avatarPath={avatarPath}
         size={AvatarSize.XS}
         onAvatarClick={handleClick}
-        name={userName}
         pubkey={ourNumber}
+        dataTestId="leftpane-primary-avatar"
       />
     );
   }
 
   const unreadToShow = type === SectionType.Message ? unreadMessageCount : undefined;
 
-  let iconType: SessionIconType;
   switch (type) {
     case SectionType.Message:
-      iconType = 'chatBubble';
-      break;
-    case SectionType.Contact:
-      iconType = 'users';
-      break;
-    case SectionType.Settings:
-      iconType = 'gear';
-      break;
-    case SectionType.Moon:
-      iconType = 'moon';
-      break;
-    default:
-      iconType = 'moon';
-  }
-  const iconColor = undefined;
-
-  return (
-    <>
-      {type === SectionType.PathIndicator ? (
-        <ActionPanelOnionStatusLight handleClick={handleClick} isSelected={isSelected} />
-      ) : (
+      return (
         <SessionIconButton
-          iconSize={'medium'}
-          iconType={iconType}
-          iconColor={iconColor}
+          iconSize="medium"
+          dataTestId="message-section"
+          iconType={'chatBubble'}
+          iconColor={undefined}
           notificationCount={unreadToShow}
           onClick={handleClick}
           isSelected={isSelected}
         />
-      )}
-    </>
-  );
+      );
+    case SectionType.Contact:
+      return (
+        <SessionIconButton
+          iconSize="medium"
+          dataTestId="contact-section"
+          iconType={'users'}
+          iconColor={undefined}
+          notificationCount={unreadToShow}
+          onClick={handleClick}
+          isSelected={isSelected}
+        />
+      );
+    case SectionType.Settings:
+      return (
+        <SessionIconButton
+          iconSize="medium"
+          dataTestId="settings-section"
+          iconType={'gear'}
+          iconColor={undefined}
+          notificationCount={unreadToShow}
+          onClick={handleClick}
+          isSelected={isSelected}
+        />
+      );
+    case SectionType.PathIndicator:
+      return (
+        <ActionPanelOnionStatusLight
+          dataTestId="onion-status-section"
+          handleClick={handleClick}
+          isSelected={isSelected}
+        />
+      );
+    default:
+      return (
+        <SessionIconButton
+          iconSize="medium"
+          iconType={'moon'}
+          dataTestId="theme-section"
+          iconColor={undefined}
+          notificationCount={unreadToShow}
+          onClick={handleClick}
+          isSelected={isSelected}
+        />
+      );
+  }
 };
 
 const cleanUpMediasInterval = DURATION.MINUTES * 30;
@@ -263,12 +281,7 @@ export const ActionsPanel = () => {
     return () => clearTimeout(timeout);
   }, []);
 
-  useInterval(
-    () => {
-      cleanUpOldDecryptedMedias();
-    },
-    startCleanUpMedia ? cleanUpMediasInterval : null
-  );
+  useInterval(cleanUpOldDecryptedMedias, startCleanUpMedia ? cleanUpMediasInterval : null);
 
   if (!ourPrimaryConversation) {
     window?.log?.warn('ActionsPanel: ourPrimaryConversation is not set');
@@ -300,8 +313,11 @@ export const ActionsPanel = () => {
       <ModalContainer />
 
       <CallContainer />
-      <div className="module-left-pane__sections-container">
-        <Section type={SectionType.Profile} avatarPath={ourPrimaryConversation.avatarPath} />
+      <div
+        className="module-left-pane__sections-container"
+        data-testid="leftpane-section-container"
+      >
+        <Section type={SectionType.Profile} />
         <Section type={SectionType.Message} />
         <Section type={SectionType.Contact} />
         <Section type={SectionType.Settings} />
