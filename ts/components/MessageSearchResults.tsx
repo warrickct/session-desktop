@@ -11,6 +11,8 @@ import {
   openConversationWithMessages,
 } from '../state/ducks/conversations';
 import { getOurPubKeyStrFromCache } from '../session/utils/User';
+import { useConversationUsername } from '../hooks/useParamSelector';
+import { MessageDirection } from '../models/messageType';
 
 type PropsHousekeeping = {
   isSelected?: boolean;
@@ -24,6 +26,7 @@ export type PropsForSearchResults = {
   destination: string;
   source: string;
 
+  direction?: string;
   snippet?: string; //not sure about the type of snippet
   receivedAt?: number;
 };
@@ -63,12 +66,17 @@ const From = (props: { source: string; destination: string }) => {
 
   const ourKey = getOurPubKeyStrFromCache();
 
+  // TODO: ww maybe add useConversationUsername hook within contact name
   if (destination !== ourKey) {
     return (
       <div className="module-message-search-result__header__from">
         {fromName} {window.i18n('to')}{' '}
         <span className="module-mesages-search-result__header__group">
-          <ContactName pubkey={destination} shouldShowPubkey={false} />
+          <ContactName
+            name={useConversationUsername(destination)}
+            pubkey={destination}
+            shouldShowPubkey={false}
+          />
         </span>
       </div>
     );
@@ -83,11 +91,33 @@ const AvatarItem = (props: { source: string }) => {
 };
 
 export const MessageSearchResult = (props: Props) => {
-  const { isSelected, id, conversationId, receivedAt, snippet, destination, source } = props;
+  const {
+    isSelected,
+    id,
+    conversationId,
+    receivedAt,
+    snippet,
+    destination,
+    source,
+    direction,
+  } = props;
 
-  if (!destination || !source) {
+  const sourceOrDestinationDerivable =
+    (destination && direction === MessageDirection.outgoing) ||
+    !destination ||
+    !source ||
+    (source && direction === MessageDirection.incoming);
+
+  if (!sourceOrDestinationDerivable) {
     return null;
   }
+
+  const searchResultSource =
+    !source && direction === MessageDirection.outgoing ? getOurPubKeyStrFromCache() : source;
+  const searchResultDestination =
+    !destination && direction === MessageDirection.incoming
+      ? getOurPubKeyStrFromCache()
+      : destination;
 
   return (
     <div
@@ -103,10 +133,10 @@ export const MessageSearchResult = (props: Props) => {
         isSelected ? 'module-message-search-result--is-selected' : null
       )}
     >
-      <AvatarItem source={source} />
+      <AvatarItem source={searchResultSource} />
       <div className="module-message-search-result__text">
         <div className="module-message-search-result__header">
-          <From source={source} destination={destination} />
+          <From source={searchResultSource} destination={searchResultDestination} />
           <div className="module-message-search-result__header__timestamp">
             <Timestamp timestamp={receivedAt} />
           </div>
