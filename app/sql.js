@@ -2247,7 +2247,7 @@ function trimMessages() {
       WHERE id NOT IN (
         SELECT id FROM ${MESSAGES_TABLE}
         ORDER BY received_at DESC
-        LIMIT 2000
+        LIMIT 10000
       );
     `
     )
