@@ -1,18 +1,18 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import { SessionButton, SessionButtonColor } from '../session/SessionButton';
-import { ContactType, SessionMemberListItem } from '../session/SessionMemberListItem';
 import { ToastUtils, UserUtils } from '../../session/utils';
 import autoBind from 'auto-bind';
 import { getConversationController } from '../../session/conversations';
 
 import _ from 'lodash';
 import { SpacerLG, SpacerMD, Text } from '../basic/Text';
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
 import { ConversationModel } from '../../models/conversation';
 import { updateGroupMembersModal } from '../../state/ducks/modalDialog';
 import { ClosedGroup } from '../../session';
+import { SessionButton, SessionButtonColor } from '../basic/SessionButton';
+import { ContactType, SessionMemberListItem } from '../SessionMemberListItem';
+import { SessionWrapperModal } from '../SessionWrapperModal';
 
 type Props = {
   conversationId: string;

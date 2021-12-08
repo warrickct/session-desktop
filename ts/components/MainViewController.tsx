@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { ContactType } from './session/SessionMemberListItem';
 import { ToastUtils } from '../session/utils';
 import { createClosedGroup as createClosedGroupV2 } from '../receiver/closedGroups';
 import { VALIDATION } from '../session/constants';
+import { ContactType } from './SessionMemberListItem';
 
 export class MessageView extends React.Component {
   public render() {

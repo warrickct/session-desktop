@@ -26,7 +26,7 @@ import {
 } from '../messages/outgoing/visibleMessage/VisibleMessage';
 import { ExpirationTimerUpdateMessage } from '../messages/outgoing/controlMessage/ExpirationTimerUpdateMessage';
 import { getV2OpenGroupRoom } from '../../data/opengroups';
-import { getCompleteUrlFromRoom } from '../../opengroup/utils/OpenGroupUtils';
+import { getCompleteUrlFromRoom } from '../apis/open_group_api/utils/OpenGroupUtils';
 import { DURATION } from '../constants';
 import { UnsendMessage } from '../messages/outgoing/controlMessage/UnsendMessage';
 

@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 
-import { SessionButton, SessionButtonColor } from '../session/SessionButton';
-import { ContactType, SessionMemberListItem } from '../session/SessionMemberListItem';
 import { getConversationController } from '../../session/conversations';
 import { ToastUtils, UserUtils } from '../../session/utils';
 import { initiateGroupUpdate } from '../../session/group';
@@ -9,12 +7,14 @@ import { ConversationModel, ConversationTypeEnum } from '../../models/conversati
 import { getCompleteUrlForV2ConvoId } from '../../interactions/conversationInteractions';
 import _ from 'lodash';
 import { VALIDATION } from '../../session/constants';
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
 import { SpacerLG } from '../basic/Text';
 import { useDispatch } from 'react-redux';
 import { updateInviteContactModal } from '../../state/ducks/modalDialog';
 // tslint:disable-next-line: no-submodule-imports
 import useKey from 'react-use/lib/useKey';
+import { SessionButton, SessionButtonColor } from '../basic/SessionButton';
+import { ContactType, SessionMemberListItem } from '../SessionMemberListItem';
+import { SessionWrapperModal } from '../SessionWrapperModal';
 
 type Props = {
   conversationId: string;

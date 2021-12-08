@@ -20,23 +20,23 @@ import {
   ConversationHeaderProps,
   ConversationHeaderTitleProps,
 } from '../../components/conversation/ConversationHeader';
-import { LightBoxOptions } from '../../components/session/conversation/SessionConversation';
-import { ReplyingToMessageProps } from '../../components/session/conversation/composition/CompositionBox';
+import _ from 'lodash';
+import { getIsMessageRequestsEnabled } from './userConfig';
+import { ReplyingToMessageProps } from '../../components/conversation/composition/CompositionBox';
+import { MessageAttachmentSelectorProps } from '../../components/conversation/message/message-content/MessageAttachment';
+import { MessageAuthorSelectorProps } from '../../components/conversation/message/message-content/MessageAuthorText';
+import { MessageAvatarSelectorProps } from '../../components/conversation/message/message-content/MessageAvatar';
+import { MessageContentSelectorProps } from '../../components/conversation/message/message-content/MessageContent';
+import { MessageContentWithStatusSelectorProps } from '../../components/conversation/message/message-content/MessageContentWithStatus';
+import { MessageContextMenuSelectorProps } from '../../components/conversation/message/message-content/MessageContextMenu';
+import { MessagePreviewSelectorProps } from '../../components/conversation/message/message-content/MessagePreview';
+import { MessageQuoteSelectorProps } from '../../components/conversation/message/message-content/MessageQuote';
+import { MessageStatusSelectorProps } from '../../components/conversation/message/message-content/MessageStatus';
+import { MessageTextSelectorProps } from '../../components/conversation/message/message-content/MessageText';
+import { GenericReadableMessageSelectorProps } from '../../components/conversation/message/message-item/GenericReadableMessage';
+import { LightBoxOptions } from '../../components/conversation/SessionConversation';
 import { getConversationController } from '../../session/conversations';
 import { UserUtils } from '../../session/utils';
-import { MessageAvatarSelectorProps } from '../../components/conversation/message/MessageAvatar';
-import _ from 'lodash';
-import { MessagePreviewSelectorProps } from '../../components/conversation/message/MessagePreview';
-import { MessageQuoteSelectorProps } from '../../components/conversation/message/MessageQuote';
-import { MessageStatusSelectorProps } from '../../components/conversation/message/MessageStatus';
-import { MessageTextSelectorProps } from '../../components/conversation/message/MessageText';
-import { MessageContextMenuSelectorProps } from '../../components/conversation/message/MessageContextMenu';
-import { MessageAuthorSelectorProps } from '../../components/conversation/message/MessageAuthorText';
-import { MessageAttachmentSelectorProps } from '../../components/conversation/message/MessageAttachment';
-import { MessageContentSelectorProps } from '../../components/conversation/message/MessageContent';
-import { MessageContentWithStatusSelectorProps } from '../../components/conversation/message/MessageContentWithStatus';
-import { GenericReadableMessageSelectorProps } from '../../components/conversation/message/GenericReadableMessage';
-import { getIsMessageRequestsEnabled } from './userConfig';
 
 export const getConversations = (state: StateType): ConversationsStateType => state.conversations;
 

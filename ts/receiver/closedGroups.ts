@@ -31,7 +31,7 @@ import { forceSyncConfigurationNowIfNeeded } from '../session/utils/syncUtils';
 import { ClosedGroupEncryptionPairReplyMessage } from '../session/messages/outgoing/controlMessage/group/ClosedGroupEncryptionPairReplyMessage';
 import { queueAllCachedFromSource } from './receiver';
 import { openConversationWithMessages } from '../state/ducks/conversations';
-import { getSwarmPollingInstance } from '../session/snode_api';
+import { getSwarmPollingInstance } from '../session/apis/snode_api';
 import { MessageModel } from '../models/message';
 
 import { updateConfirmModal } from '../state/ducks/modalDialog';

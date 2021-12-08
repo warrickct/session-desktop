@@ -35,22 +35,23 @@ import {
 } from '../session/messages/outgoing/visibleMessage/VisibleMessage';
 import { GroupInvitationMessage } from '../session/messages/outgoing/visibleMessage/GroupInvitationMessage';
 import { ReadReceiptMessage } from '../session/messages/outgoing/controlMessage/receipt/ReadReceiptMessage';
-import { OpenGroupUtils } from '../opengroup/utils';
+import { OpenGroupUtils } from '../session/apis/open_group_api/utils';
 import { OpenGroupVisibleMessage } from '../session/messages/outgoing/visibleMessage/OpenGroupVisibleMessage';
-import { OpenGroupRequestCommonType } from '../opengroup/opengroupV2/ApiUtil';
-import { getOpenGroupV2FromConversationId } from '../opengroup/utils/OpenGroupUtils';
+import { OpenGroupRequestCommonType } from '../session/apis/open_group_api/opengroupV2/ApiUtil';
+import { getOpenGroupV2FromConversationId } from '../session/apis/open_group_api/utils/OpenGroupUtils';
 import { createTaskWithTimeout } from '../session/utils/TaskWithTimeout';
 import { perfEnd, perfStart } from '../session/utils/Performance';
-import {
-  ReplyingToMessageProps,
-  SendMessageType,
-} from '../components/session/conversation/composition/CompositionBox';
+
 import { ed25519Str } from '../session/onions/onionPath';
 import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsManager';
 import { IMAGE_JPEG } from '../types/MIME';
 import { forceSyncConfigurationNowIfNeeded } from '../session/utils/syncUtils';
-import { getLatestTimestampOffset } from '../session/snode_api/SNodeAPI';
+import { getLatestTimestampOffset } from '../session/apis/snode_api/SNodeAPI';
 import { createLastMessageUpdate } from '../types/Conversation';
+import {
+  ReplyingToMessageProps,
+  SendMessageType,
+} from '../components/conversation/composition/CompositionBox';
 
 export enum ConversationTypeEnum {
   GROUP = 'group',
