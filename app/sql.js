@@ -72,6 +72,7 @@ module.exports = {
   getNextExpiringMessage,
   getMessagesByConversation,
   getFirstUnreadMessageIdInConversation,
+  trimMessages,
 
   getUnprocessedCount,
   getAllUnprocessed,
@@ -2233,6 +2234,35 @@ function getFirstUnreadMessageIdInConversation(conversationId) {
     return undefined;
   }
   return rows[0].id;
+}
+
+/**
+ * Deletes all but the 10,000 last received messages.
+ */
+function trimMessages() {
+  globalInstance
+    .prepare(
+      `
+      DELETE FROM ${MESSAGES_TABLE}
+      WHERE id NOT IN (
+        SELECT id FROM ${MESSAGES_TABLE}
+        ORDER BY received_at DESC
+        LIMIT 2000
+      );
+    `
+    )
+    .run();
+
+  const rows = globalInstance
+    .prepare(
+      `SELECT * FROM ${MESSAGES_TABLE}
+     ORDER BY received_at DESC;`
+    )
+    .all();
+
+  return rows;
+
+  // return map(rows, row => jsonToObject(row.json));
 }
 
 function getMessagesBySentAt(sentAt) {

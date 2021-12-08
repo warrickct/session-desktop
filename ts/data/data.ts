@@ -122,6 +122,7 @@ const channelsToMake = {
   getFirstUnreadMessageIdInConversation,
   getSeenMessagesByHashList,
   getLastHashBySnode,
+  trimMessages,
 
   getUnprocessedCount,
   getAllUnprocessed,
@@ -761,6 +762,12 @@ export async function getFirstUnreadMessageIdInConversation(
   conversationId: string
 ): Promise<string | undefined> {
   return channels.getFirstUnreadMessageIdInConversation(conversationId);
+}
+
+export async function trimMessages(): Promise<void> {
+  const count = await channels.trimMessages();
+  console.warn({ count });
+  return;
 }
 
 export async function getLastHashBySnode(convoId: string, snode: string): Promise<string> {

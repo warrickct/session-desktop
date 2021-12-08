@@ -3,7 +3,11 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 // tslint:disable-next-line: no-submodule-imports
 import useUpdate from 'react-use/lib/useUpdate';
-import { createOrUpdateItem, hasLinkPreviewPopupBeenDisplayed } from '../../../../data/data';
+import {
+  createOrUpdateItem,
+  hasLinkPreviewPopupBeenDisplayed,
+  trimMessages,
+} from '../../../../data/data';
 import { ToastUtils } from '../../../../session/utils';
 import { updateConfirmModal } from '../../../../state/ducks/modalDialog';
 import { toggleAudioAutoplay } from '../../../../state/ducks/userConfig';
@@ -129,6 +133,14 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           onClick={() => void shell.openExternal('https://crowdin.com/project/session-desktop/')}
           buttonColor={SessionButtonColor.Primary}
           buttonText={window.i18n('translation')}
+        />
+        <SessionSettingButtonItem
+          onClick={async () => {
+            console.warn('trim the database to last 10k messages');
+            await trimMessages();
+          }}
+          buttonColor={SessionButtonColor.Primary}
+          buttonText={'trim message database'}
         />
         <SessionSettingButtonItem
           onClick={() => {
