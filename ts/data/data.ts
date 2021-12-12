@@ -764,6 +764,10 @@ export async function getFirstUnreadMessageIdInConversation(
   return channels.getFirstUnreadMessageIdInConversation(conversationId);
 }
 
+/**
+ * Deletes all but the last 10,000 most recently received messages in the database
+ * @returns
+ */
 export async function trimMessages(): Promise<void> {
   const count = await channels.trimMessages();
   console.warn({ count });

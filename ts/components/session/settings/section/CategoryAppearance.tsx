@@ -135,12 +135,13 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           buttonText={window.i18n('translation')}
         />
         <SessionSettingButtonItem
+          title={window.i18n('trimDatabase')}
+          description={window.i18n('trimDatabaseDescription')}
           onClick={async () => {
-            console.warn('trim the database to last 10k messages');
             await trimMessages();
           }}
           buttonColor={SessionButtonColor.Primary}
-          buttonText={'trim message database'}
+          buttonText={window.i18n('trimDatabase')}
         />
         <SessionSettingButtonItem
           onClick={() => {

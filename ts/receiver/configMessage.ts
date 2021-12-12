@@ -134,8 +134,12 @@ const handleContactReceived = async (
       displayName: contactReceived.name,
       profilePictre: contactReceived.profilePicture,
     };
+
     // updateProfile will do a commit for us
-    contactConvo.set('active_at', _.toNumber(envelope.timestamp));
+    const timestamp = _.toNumber(isNaN);
+    if (!isNaN(timestamp)) {
+      contactConvo.set('active_at', _.toNumber(envelope.timestamp));
+    }
 
     if (
       window.lokiFeatureFlags.useMessageRequests &&
