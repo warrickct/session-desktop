@@ -3,7 +3,11 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 // tslint:disable-next-line: no-submodule-imports
 import useUpdate from 'react-use/lib/useUpdate';
-import { createOrUpdateItem, hasLinkPreviewPopupBeenDisplayed, trimMessages } from '../../../data/data';
+import {
+  createOrUpdateItem,
+  hasLinkPreviewPopupBeenDisplayed,
+  trimMessages,
+} from '../../../data/data';
 import { ToastUtils } from '../../../session/utils';
 import { updateConfirmModal } from '../../../state/ducks/modalDialog';
 import { toggleAudioAutoplay } from '../../../state/ducks/userConfig';
@@ -104,7 +108,7 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           onClickToggle={async () => {
             await toggleStartInTray();
             forceUpdate();
-          }}
+            }}
           title={window.i18n('startInTrayTitle')}
           description={window.i18n('startInTrayDescription')}
           active={isStartInTrayActive}
@@ -132,12 +136,25 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           buttonText={window.i18n('translation')}
         />
         <SessionSettingButtonItem
+          title={window.i18n('trimDatabase')}
+          description={window.i18n('trimDatabaseDescription')}
           onClick={async () => {
             console.warn('trim the database to last 10k messages');
-            await trimMessages();
+
+            dispatch(
+              updateConfirmModal({
+                onClickOk: () => {
+                  void trimMessages();
+                },
+                onClickClose: () => {
+                  updateConfirmModal(null);
+                },
+                message: `Are you sure you want to delete your ${}`
+              })
+            );
           }}
           buttonColor={SessionButtonColor.Primary}
-          buttonText={'trim message database'}
+          buttonText={window.i18n('trimDatabase')}
         />
         <SessionSettingButtonItem
           onClick={() => {
