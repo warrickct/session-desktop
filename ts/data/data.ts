@@ -123,6 +123,7 @@ const channelsToMake = {
   hasConversationOutgoingMessage,
   getSeenMessagesByHashList,
   getLastHashBySnode,
+  trimMessages,
 
   getUnprocessedCount,
   getAllUnprocessed,
@@ -799,6 +800,12 @@ export async function removeAllMessagesInConversation(conversationId: string): P
     // eslint-disable-next-line no-await-in-loop
     await channels.removeMessage(ids);
   } while (messages.length > 0);
+}
+
+export async function trimMessages(): Promise<void> {
+  const count = await channels.trimMessages();
+  console.warn({ count });
+  return;
 }
 
 export async function getMessagesBySentAt(sentAt: number): Promise<MessageCollection> {
