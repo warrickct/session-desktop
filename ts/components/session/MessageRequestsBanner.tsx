@@ -28,7 +28,6 @@ const StyledMessageRequestBannerHeader = styled.span`
   color: var(--color-text-subtle);
   padding-left: var(--margin-xs);
   margin-inline-start: 12px;
-  margin-top: var(--margin-sm);
   line-height: 18px;
   overflow-x: hidden;
   overflow-y: hidden;
