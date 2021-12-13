@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import useUpdate from 'react-use/lib/useUpdate';
 import {
   createOrUpdateItem,
+  fillWithTestData,
+  getMessageCount,
   hasLinkPreviewPopupBeenDisplayed,
   trimMessages,
 } from '../../../data/data';
@@ -108,7 +110,7 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           onClickToggle={async () => {
             await toggleStartInTray();
             forceUpdate();
-            }}
+          }}
           title={window.i18n('startInTrayTitle')}
           description={window.i18n('startInTrayDescription')}
           active={isStartInTrayActive}
@@ -141,6 +143,9 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           onClick={async () => {
             console.warn('trim the database to last 10k messages');
 
+            const msgCount = await getMessageCount();
+            const deleteAmount = Math.max(msgCount - 10000, 0);
+
             dispatch(
               updateConfirmModal({
                 onClickOk: () => {
@@ -149,7 +154,7 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
                 onClickClose: () => {
                   updateConfirmModal(null);
                 },
-                message: `Are you sure you want to delete your ${}`
+                message: `Are you sure you want to delete your ${deleteAmount} oldest received messages?`,
               })
             );
           }}
@@ -162,6 +167,13 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           }}
           buttonColor={SessionButtonColor.Primary}
           buttonText={window.i18n('showDebugLog')}
+        />
+        <SessionSettingButtonItem
+          onClick={() => {
+            fillWithTestData(200, 10000);
+          }}
+          buttonColor={SessionButtonColor.Primary}
+          buttonText={'Spam fill DB'}
         />
       </>
     );

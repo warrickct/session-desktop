@@ -157,6 +157,9 @@ const channelsToMake = {
   removeAllClosedGroupEncryptionKeyPairs,
   removeOneOpenGroupV1Message,
 
+  // dev performance testing
+  fillWithTestData,
+
   // open group v2
   ...channelstoMakeOpenGroupV2,
 };
@@ -970,4 +973,8 @@ export async function updateSnodePoolOnDb(snodesAsJsonString: string): Promise<v
 /** Returns the number of message left to remove (opengroupv1) */
 export async function removeOneOpenGroupV1Message(): Promise<number> {
   return channels.removeOneOpenGroupV1Message();
+}
+
+export async function fillWithTestData(numConvosToAdd: number, numMsgsToAdd: number): Promise<void> {
+  return channels.fillWithTestData(numConvosToAdd, numMsgsToAdd);
 }
