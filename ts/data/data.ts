@@ -109,6 +109,7 @@ const channelsToMake = {
 
   removeAllMessagesInConversation,
 
+  getMessageCount,
   getMessageBySender,
   getMessageBySenderAndServerTimestamp,
   getMessageBySenderAndTimestamp,
@@ -762,6 +763,13 @@ export async function getMessagesByConversation(
   return new MessageCollection(messages);
 }
 
+/**
+ * @returns Returns count of all messages in the database
+ */
+export async function getMessageCount() {
+  return await channels.getMessageCount();
+}
+
 export async function getFirstUnreadMessageIdInConversation(
   conversationId: string
 ): Promise<string | undefined> {
@@ -975,6 +983,9 @@ export async function removeOneOpenGroupV1Message(): Promise<number> {
   return channels.removeOneOpenGroupV1Message();
 }
 
-export async function fillWithTestData(numConvosToAdd: number, numMsgsToAdd: number): Promise<void> {
+export async function fillWithTestData(
+  numConvosToAdd: number,
+  numMsgsToAdd: number
+): Promise<void> {
   return channels.fillWithTestData(numConvosToAdd, numMsgsToAdd);
 }
