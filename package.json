@@ -46,7 +46,6 @@
     "integration-test": "mocha --recursive --exit --timeout 30000  \"./ts/test-integration/**/*.test.js\" \"./ts/test/*.test.js\"",
     "clean-transpile": "rimraf 'ts/**/*.js' 'ts/*.js' 'ts/*.js.map' 'ts/**/*.js.map' && rimraf tsconfig.tsbuildinfo;",
     "ready": "yarn clean-transpile; yarn grunt && yarn lint-full && yarn test",
-    "build:webpack:sql-worker": "cross-env NODE_ENV=production webpack -c webpack-sql-worker.config.ts",
     "sedtoAppImage": "sed -i 's/\"target\": \\[\"deb\", \"rpm\", \"freebsd\"\\]/\"target\": \"AppImage\"/g' package.json",
     "sedtoDeb": "sed -i 's/\"target\": \"AppImage\"/\"target\": \\[\"deb\", \"rpm\", \"freebsd\"\\]/g' package.json"
   },
@@ -89,7 +88,6 @@
     "lodash": "4.17.11",
     "long": "^4.0.0",
     "mic-recorder-to-mp3": "^2.2.2",
-    "mkdirp": "0.5.1",
     "moment": "2.21.0",
     "mustache": "2.3.0",
     "nan": "2.14.2",
@@ -154,7 +152,6 @@
     "@types/libsodium-wrappers": "^0.7.8",
     "@types/linkify-it": "2.0.3",
     "@types/lodash": "4.14.106",
-    "@types/mkdirp": "0.5.2",
     "@types/mocha": "5.0.0",
     "@types/node-fetch": "^2.5.7",
     "@types/pify": "3.0.2",

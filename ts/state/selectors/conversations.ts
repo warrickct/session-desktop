@@ -20,23 +20,23 @@ import {
   ConversationHeaderProps,
   ConversationHeaderTitleProps,
 } from '../../components/conversation/ConversationHeader';
-import { LightBoxOptions } from '../../components/session/conversation/SessionConversation';
-import { ReplyingToMessageProps } from '../../components/session/conversation/composition/CompositionBox';
+import _ from 'lodash';
+import { getIsMessageRequestsEnabled } from './userConfig';
+import { ReplyingToMessageProps } from '../../components/conversation/composition/CompositionBox';
+import { MessageAttachmentSelectorProps } from '../../components/conversation/message/message-content/MessageAttachment';
+import { MessageAuthorSelectorProps } from '../../components/conversation/message/message-content/MessageAuthorText';
+import { MessageAvatarSelectorProps } from '../../components/conversation/message/message-content/MessageAvatar';
+import { MessageContentSelectorProps } from '../../components/conversation/message/message-content/MessageContent';
+import { MessageContentWithStatusSelectorProps } from '../../components/conversation/message/message-content/MessageContentWithStatus';
+import { MessageContextMenuSelectorProps } from '../../components/conversation/message/message-content/MessageContextMenu';
+import { MessagePreviewSelectorProps } from '../../components/conversation/message/message-content/MessagePreview';
+import { MessageQuoteSelectorProps } from '../../components/conversation/message/message-content/MessageQuote';
+import { MessageStatusSelectorProps } from '../../components/conversation/message/message-content/MessageStatus';
+import { MessageTextSelectorProps } from '../../components/conversation/message/message-content/MessageText';
+import { GenericReadableMessageSelectorProps } from '../../components/conversation/message/message-item/GenericReadableMessage';
+import { LightBoxOptions } from '../../components/conversation/SessionConversation';
 import { getConversationController } from '../../session/conversations';
 import { UserUtils } from '../../session/utils';
-import { MessageAvatarSelectorProps } from '../../components/conversation/message/MessageAvatar';
-import _ from 'lodash';
-import { MessagePreviewSelectorProps } from '../../components/conversation/message/MessagePreview';
-import { MessageQuoteSelectorProps } from '../../components/conversation/message/MessageQuote';
-import { MessageStatusSelectorProps } from '../../components/conversation/message/MessageStatus';
-import { MessageTextSelectorProps } from '../../components/conversation/message/MessageText';
-import { MessageContextMenuSelectorProps } from '../../components/conversation/message/MessageContextMenu';
-import { MessageAuthorSelectorProps } from '../../components/conversation/message/MessageAuthorText';
-import { MessageAttachmentSelectorProps } from '../../components/conversation/message/MessageAttachment';
-import { MessageContentSelectorProps } from '../../components/conversation/message/MessageContent';
-import { MessageContentWithStatusSelectorProps } from '../../components/conversation/message/MessageContentWithStatus';
-import { GenericReadableMessageSelectorProps } from '../../components/conversation/message/GenericReadableMessage';
-import { getIsMessageRequestsEnabled } from './userConfig';
 
 export const getConversations = (state: StateType): ConversationsStateType => state.conversations;
 
@@ -80,19 +80,6 @@ export const getSelectedConversationIsPublic = createSelector(
   getSelectedConversation,
   (state: ReduxConversationType | undefined): boolean => {
     return state?.isPublic || false;
-  }
-);
-
-const getConversationId = (_whatever: any, id: string) => id;
-
-export const getConversationById = createSelector(
-  getConversations,
-  getConversationId,
-  (
-    state: ConversationsStateType,
-    convoId: string | undefined
-  ): ReduxConversationType | undefined => {
-    return convoId ? state.conversationLookup[convoId] : undefined;
   }
 );
 
@@ -190,7 +177,7 @@ export type MessagePropsType =
   | 'timer-notification'
   | 'regular-message'
   | 'unread-indicator'
-  | 'missed-call-notification';
+  | 'call-notification';
 
 export const getSortedMessagesTypesOfSelectedConversation = createSelector(
   getSortedMessagesOfSelectedConversation,
@@ -257,14 +244,14 @@ export const getSortedMessagesTypesOfSelectedConversation = createSelector(
         };
       }
 
-      if (msg.propsForMissedCall) {
+      if (msg.propsForCallNotification) {
         return {
           showUnreadIndicator: isFirstUnread,
           showDateBreak,
           message: {
-            messageType: 'missed-call-notification',
+            messageType: 'call-notification',
             props: {
-              ...msg.propsForMissedCall,
+              ...msg.propsForCallNotification,
               messageId: msg.propsForMessage.id,
             },
           },
@@ -326,6 +313,7 @@ export const _getConversationComparator = (testingi18n?: LocalizerType) => {
     return collator.compare(leftTitle, rightTitle);
   };
 };
+
 export const getConversationComparator = createSelector(getIntl, _getConversationComparator);
 
 // export only because we use it in some of our tests
@@ -427,7 +415,7 @@ export const getSortedConversations = createSelector(
   _getSortedConversations
 );
 
-export const _getConversationRequests = (
+const _getConversationRequests = (
   sortedConversations: Array<ReduxConversationType>,
   isMessageRequestEnabled?: boolean
 ): Array<ReduxConversationType> => {
@@ -442,6 +430,39 @@ export const getConversationRequests = createSelector(
   getSortedConversations,
   getIsMessageRequestsEnabled,
   _getConversationRequests
+);
+
+const _getPrivateContactsPubkeys = (
+  sortedConversations: Array<ReduxConversationType>,
+  isMessageRequestEnabled?: boolean
+): Array<string> => {
+  const pushToMessageRequests =
+    (isMessageRequestEnabled && window?.lokiFeatureFlags?.useMessageRequests) ||
+    !isMessageRequestEnabled;
+
+  return _.filter(sortedConversations, conversation => {
+    return (
+      conversation.isPrivate &&
+      !conversation.isBlocked &&
+      !conversation.isMe &&
+      (conversation.isApproved || !pushToMessageRequests) &&
+      Boolean(conversation.activeAt)
+    );
+  }).map(convo => convo.id);
+};
+
+/**
+ * Returns all the conversation ids of private conversations which are
+ * - private
+ * - not me
+ * - not blocked
+ * - approved (or message requests are disabled)
+ * - active_at is set to something truthy
+ */
+export const getPrivateContactsPubkeys = createSelector(
+  getSortedConversations,
+  getIsMessageRequestsEnabled,
+  _getPrivateContactsPubkeys
 );
 
 export const getLeftPaneLists = createSelector(
@@ -548,6 +569,13 @@ export const getIsSelectedPrivate = createSelector(
   getConversationHeaderProps,
   (headerProps): boolean => {
     return headerProps?.isPrivate || false;
+  }
+);
+
+export const getIsSelectedBlocked = createSelector(
+  getConversationHeaderProps,
+  (headerProps): boolean => {
+    return headerProps?.isBlocked || false;
   }
 );
 
@@ -796,7 +824,7 @@ export const getMessagePropsByMessageId = createSelector(
         authorPhoneNumber,
         authorAvatarPath: foundSenderConversation.avatarPath || null,
         isKickedFromGroup: foundMessageConversation.isKickedFromGroup || false,
-        authorProfileName,
+        authorProfileName: authorProfileName || 'Unknown',
         authorName,
       },
     };

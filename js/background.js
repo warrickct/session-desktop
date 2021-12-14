@@ -192,27 +192,6 @@
     }
   });
 
-  Whisper.events.on('deleteLocalPublicMessages', async ({ messageServerIds, conversationId }) => {
-    if (!Array.isArray(messageServerIds)) {
-      return;
-    }
-    const messageIds = await window.Signal.Data.getMessageIdsFromServerIds(
-      messageServerIds,
-      conversationId
-    );
-    if (messageIds.length === 0) {
-      return;
-    }
-
-    const conversation = window.getConversationController().get(conversationId);
-    messageIds.forEach(id => {
-      if (conversation) {
-        conversation.removeMessage(id);
-      }
-      window.Signal.Data.removeMessage(id);
-    });
-  });
-
   function manageExpiringData() {
     window.Signal.Data.cleanSeenMessages();
     window.Signal.Data.cleanLastHashes();
@@ -448,7 +427,7 @@
     Whisper.Notifications.disable(); // avoid notification flood until empty
     setTimeout(() => {
       Whisper.Notifications.enable();
-    }, window.CONSTANTS.NOTIFICATION_ENABLE_TIMEOUT_SECONDS * 1000);
+    }, 10 * 1000); // 10 sec
 
     window.NewReceiver.queueAllCached();
     window.libsession.Utils.AttachmentDownloads.start({

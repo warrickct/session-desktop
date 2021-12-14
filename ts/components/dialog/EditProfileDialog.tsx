@@ -2,24 +2,24 @@ import React from 'react';
 import classNames from 'classnames';
 import { QRCode } from 'react-qr-svg';
 
-import { Avatar, AvatarSize } from '../Avatar';
+import { Avatar, AvatarSize } from '../avatar/Avatar';
 
-import { SessionButton, SessionButtonColor, SessionButtonType } from '../session/SessionButton';
-
-import { SessionIconButton } from '../session/icon';
-import { PillDivider } from '../session/PillDivider';
+import { PillDivider } from '../basic/PillDivider';
 import { SyncUtils, ToastUtils, UserUtils } from '../../session/utils';
-import { MAX_USERNAME_LENGTH } from '../session/registration/RegistrationStages';
-import { SessionSpinner } from '../session/SessionSpinner';
+
 import { ConversationModel, ConversationTypeEnum } from '../../models/conversation';
 
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
 import { AttachmentUtil } from '../../util';
 import { getConversationController } from '../../session/conversations';
 import { SpacerLG, SpacerMD } from '../basic/Text';
 import autoBind from 'auto-bind';
 import { editProfileModal } from '../../state/ducks/modalDialog';
 import { uploadOurAvatar } from '../../interactions/conversationInteractions';
+import { SessionButton, SessionButtonColor, SessionButtonType } from '../basic/SessionButton';
+import { SessionSpinner } from '../basic/SessionSpinner';
+import { SessionIconButton } from '../icon';
+import { MAX_USERNAME_LENGTH } from '../registration/RegistrationStages';
+import { SessionWrapperModal } from '../SessionWrapperModal';
 
 interface State {
   profileName: string;
@@ -150,15 +150,14 @@ export class EditProfileDialog extends React.Component<{}, State> {
               name="name"
               onChange={this.onFileSelected}
             />
-            <div className="qr-view-button">
-              <SessionIconButton
-                iconType="qr"
-                iconSize={'small'}
-                iconColor={'rgb(0, 0, 0)'}
-                onClick={() => {
-                  this.setState(state => ({ ...state, mode: 'qr' }));
-                }}
-              />
+            <div
+              className="qr-view-button"
+              onClick={() => {
+                this.setState(state => ({ ...state, mode: 'qr' }));
+              }}
+              role="button"
+            >
+              <SessionIconButton iconType="qr" iconSize="small" iconColor={'rgb(0, 0, 0)'} />
             </div>
           </div>
         </div>
@@ -246,7 +245,12 @@ export class EditProfileDialog extends React.Component<{}, State> {
     const userName = profileName || this.convo.id;
 
     return (
-      <Avatar avatarPath={avatar} name={userName} size={AvatarSize.XL} pubkey={this.convo.id} />
+      <Avatar
+        forcedAvatarPath={avatar}
+        forcedName={userName}
+        size={AvatarSize.XL}
+        pubkey={this.convo.id}
+      />
     );
   }
 

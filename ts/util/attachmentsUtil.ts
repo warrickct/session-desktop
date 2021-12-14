@@ -1,10 +1,10 @@
-import { StagedAttachmentType } from '../components/session/conversation/composition/CompositionBox';
 import { SignalService } from '../protobuf';
 import { Constants } from '../session';
 import loadImage from 'blueimp-load-image';
 import { getDecryptedMediaUrl } from '../session/crypto/DecryptedAttachmentsManager';
 import { sendDataExtractionNotification } from '../session/messages/outgoing/controlMessage/DataExtractionNotificationMessage';
 import { AttachmentType, save } from '../types/Attachment';
+import { StagedAttachmentType } from '../components/conversation/composition/CompositionBox';
 export interface MaxScaleSize {
   maxSize?: number;
   maxHeight?: number;
@@ -151,7 +151,7 @@ export const saveAttachmentToDisk = async ({
   messageSender: string;
   conversationId: string;
 }) => {
-  const decryptedUrl = await getDecryptedMediaUrl(attachment.url, attachment.contentType);
+  const decryptedUrl = await getDecryptedMediaUrl(attachment.url, attachment.contentType, false);
   save({
     attachment: { ...attachment, url: decryptedUrl },
     document,

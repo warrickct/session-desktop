@@ -1,9 +1,4 @@
-import {
-  getAllConversations,
-  getAllGroupsInvolvingId,
-  removeConversation,
-  saveConversation,
-} from '../../data/data';
+import { getAllConversations, removeConversation, saveConversation } from '../../data/data';
 import {
   ConversationAttributes,
   ConversationCollection,
@@ -11,13 +6,16 @@ import {
   ConversationTypeEnum,
 } from '../../models/conversation';
 import { BlockedNumberController } from '../../util';
-import { getSwarmFor } from '../snode_api/snodePool';
+import { getSwarmFor } from '../apis/snode_api/snodePool';
 import { PubKey } from '../types';
 import { actions as conversationActions } from '../../state/ducks/conversations';
 import { getV2OpenGroupRoom, removeV2OpenGroupRoom } from '../../data/opengroups';
 import _ from 'lodash';
-import { getOpenGroupManager } from '../../opengroup/opengroupV2/OpenGroupManagerV2';
-import { deleteAuthToken, DeleteAuthTokenRequest } from '../../opengroup/opengroupV2/ApiAuth';
+import { getOpenGroupManager } from '../apis/open_group_api/opengroupV2/OpenGroupManagerV2';
+import {
+  deleteAuthToken,
+  DeleteAuthTokenRequest,
+} from '../apis/open_group_api/opengroupV2/ApiAuth';
 import { deleteAllMessagesByConvoIdNoConfirmation } from '../../interactions/conversationInteractions';
 
 let instance: ConversationController | null;
@@ -179,11 +177,6 @@ export class ConversationController {
 
       return Promise.reject(new Error('getOrCreateAndWait: did not get conversation'));
     });
-  }
-
-  public async getAllGroupsInvolvingId(id: string) {
-    const groups = await getAllGroupsInvolvingId(id);
-    return groups.map((group: any) => this.conversations.add(group));
   }
 
   public async deleteContact(id: string) {
