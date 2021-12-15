@@ -27,7 +27,6 @@ export const BanUserDialog = (props: Props) => {
   /**
    * Bans a user from a group
    * @param deleteAll Delete all messages for that user in the group
-   * @returns
    */
   const banUser = async (deleteAll: boolean = false) => {
     // if we don't have valid data entered by the user
