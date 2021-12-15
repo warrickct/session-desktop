@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { SessionButton, SessionButtonColor, SessionButtonType } from '../session/SessionButton';
 import { PubKey } from '../../session/types';
 import { ToastUtils } from '../../session/utils';
-import { SessionSpinner } from '../session/SessionSpinner';
 import { Flex } from '../basic/Flex';
-import { ApiV2 } from '../../opengroup/opengroupV2';
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
-import { getConversationController } from '../../session/conversations';
 import { useDispatch } from 'react-redux';
-import { updateBanUserModal } from '../../state/ducks/modalDialog';
+import { updateBanUserModal, updateConfirmModal } from '../../state/ducks/modalDialog';
 import { SpacerSM } from '../basic/Text';
+import { getConversationController } from '../../session/conversations/ConversationController';
+import { ApiV2 } from '../../session/apis/open_group_api/opengroupV2';
+import { SessionWrapperModal } from '../SessionWrapperModal';
+import { SessionSpinner } from '../basic/SessionSpinner';
+import { SessionButton, SessionButtonColor, SessionButtonType } from '../basic/SessionButton';
 
 type Props = {
   conversationId: string;
@@ -24,6 +24,11 @@ export const BanUserDialog = (props: Props) => {
   const [inputBoxValue, setInputBoxValue] = useState('');
   const [banningInProgress, setBanningInProgress] = useState(false);
 
+  /**
+   * Bans a user from a group
+   * @param deleteAll Delete all messages for that user in the group
+   * @returns
+   */
   const banUser = async (deleteAll: boolean = false) => {
     // if we don't have valid data entered by the user
     const pubkey = PubKey.from(inputBoxValue);
@@ -70,6 +75,30 @@ export const BanUserDialog = (props: Props) => {
     setInputBoxValue(val);
   };
 
+  /**
+   * Starts procedure for banning user and all their messages using dialog
+   */
+  const startBanAndDeleteAllSequence = async () => {
+    if (!inputBoxValue.length) {
+      window?.log?.error('No user key entered to start ban user and all messages dialog.');
+      return;
+    }
+
+    dispatch(
+      updateConfirmModal({
+        title: i18n('banAndDeleteAllDialogTitle'),
+        okText: i18n('banUserAndDeleteAll'),
+        message: i18n('banUserAndDeleteAllConfirm'),
+        onClickOk: async () => {
+          await banUser(true);
+        },
+        onClickCancel: () => {
+          dispatch(updateConfirmModal(null));
+        },
+      })
+    );
+  };
+
   return (
     <SessionWrapperModal
       showExitIcon={true}
@@ -93,16 +122,14 @@ export const BanUserDialog = (props: Props) => {
           buttonType={SessionButtonType.Brand}
           buttonColor={SessionButtonColor.Primary}
           onClick={banUser}
-          text={i18n('ban')}
+          text={window.i18n('banUser')}
           disabled={banningInProgress}
         />
         <SpacerSM />
         <SessionButton
           buttonType={SessionButtonType.Brand}
           buttonColor={SessionButtonColor.Primary}
-          onClick={async () => {
-            await banUser(true);
-          }}
+          onClick={startBanAndDeleteAllSequence}
           text={i18n('banUserAndDeleteAll')}
           disabled={banningInProgress}
         />

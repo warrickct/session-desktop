@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { SessionButton, SessionButtonColor, SessionButtonType } from '../session/SessionButton';
 import { PubKey } from '../../session/types';
 import { ToastUtils } from '../../session/utils';
-import { SessionSpinner } from '../session/SessionSpinner';
 import { Flex } from '../basic/Flex';
-import { ApiV2 } from '../../opengroup/opengroupV2';
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
-import { getConversationController } from '../../session/conversations';
 import { useDispatch } from 'react-redux';
+import { getConversationController } from '../../session/conversations/ConversationController';
+import { ApiV2 } from '../../session/apis/open_group_api/opengroupV2';
+import { SessionWrapperModal } from '../SessionWrapperModal';
+import { SessionSpinner } from '../basic/SessionSpinner';
+import { SessionButton, SessionButtonColor, SessionButtonType } from '../basic/SessionButton';
 import { updateUnbanUserModal } from '../../state/ducks/modalDialog';
 
 type Props = {
@@ -91,7 +91,7 @@ export const UnbanUserDialog = (props: Props) => {
           buttonType={SessionButtonType.Brand}
           buttonColor={SessionButtonColor.Primary}
           onClick={unbanUser}
-          text={i18n('unban')}
+          text={i18n('unbanUser')}
           disabled={addingInProgress}
         />
 
