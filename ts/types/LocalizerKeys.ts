@@ -94,6 +94,7 @@ export type LocalizerKeys =
   | 'pinConversation'
   | 'lightboxImageAlt'
   | 'linkDevice'
+  | 'callMissedNotApproved'
   | 'goToOurSurvey'
   | 'invalidPubkeyFormat'
   | 'disappearingMessagesDisabled'
@@ -462,6 +463,6 @@ export type LocalizerKeys =
   | 'searchFor...'
   | 'joinedTheGroup'
   | 'editGroupName'
-  | 'reportIssue'
+  | 'trimDatabase'
   | 'trimDatabaseDescription'
-  | 'trimDatabase';
+  | 'reportIssue';

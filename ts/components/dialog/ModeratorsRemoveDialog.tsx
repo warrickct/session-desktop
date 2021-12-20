@@ -1,15 +1,15 @@
 import React from 'react';
-import { ApiV2 } from '../../opengroup/opengroupV2';
+import { ApiV2 } from '../../session/apis/open_group_api/opengroupV2';
 import { getConversationController } from '../../session/conversations';
 import { PubKey } from '../../session/types';
 import { ToastUtils } from '../../session/utils';
 import { Flex } from '../basic/Flex';
-import { SessionButton, SessionButtonColor, SessionButtonType } from '../session/SessionButton';
-import { ContactType, SessionMemberListItem } from '../session/SessionMemberListItem';
-import { SessionSpinner } from '../session/SessionSpinner';
 import _ from 'lodash';
-import { SessionWrapperModal } from '../session/SessionWrapperModal';
 import { updateRemoveModeratorsModal } from '../../state/ducks/modalDialog';
+import { SessionWrapperModal } from '../SessionWrapperModal';
+import { SessionButton, SessionButtonColor, SessionButtonType } from '../basic/SessionButton';
+import { SessionSpinner } from '../basic/SessionSpinner';
+import { ContactType, SessionMemberListItem } from '../SessionMemberListItem';
 interface Props {
   conversationId: string;
 }

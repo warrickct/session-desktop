@@ -1,4 +1,5 @@
-import { SessionSettingCategory } from '../../components/session/settings/SessionSettings';
+import { SessionSettingCategory } from '../../components/settings/SessionSettings';
+
 export const FOCUS_SECTION = 'FOCUS_SECTION';
 export const FOCUS_SETTINGS_SECTION = 'FOCUS_SETTINGS_SECTION';
 export const IS_APP_FOCUSED = 'IS_APP_FOCUSED';
@@ -7,7 +8,6 @@ export enum SectionType {
   Profile,
   Message,
   Contact,
-  Channel,
   Settings,
   Moon,
   PathIndicator,

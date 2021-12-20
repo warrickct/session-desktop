@@ -28,7 +28,13 @@ export function useConversationUsername(pubkey?: string) {
     if (!convo) {
       return pubkey;
     }
-    return convo?.profileName || convo?.name || convo.id;
+    // return convo?.profileName || convo?.name || convo.id;
+    const nameToReturn = convo?.profileName
+      ? convo.profileName
+      : convo?.name
+      ? convo.name
+      : convo.id;
+    return nameToReturn;
   });
 }
 

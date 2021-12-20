@@ -4,8 +4,8 @@ import { ConversationTypeEnum } from '../models/conversation';
 import {
   joinOpenGroupV2WithUIEvents,
   parseOpenGroupV2,
-} from '../opengroup/opengroupV2/JoinOpenGroupV2';
-import { getOpenGroupV2ConversationId } from '../opengroup/utils/OpenGroupUtils';
+} from '../session/apis/open_group_api/opengroupV2/JoinOpenGroupV2';
+import { getOpenGroupV2ConversationId } from '../session/apis/open_group_api/utils/OpenGroupUtils';
 import { SignalService } from '../protobuf';
 import { getConversationController } from '../session/conversations';
 import { UserUtils } from '../session/utils';
@@ -123,7 +123,7 @@ const handleContactReceived = async (
   envelope: EnvelopePlus
 ) => {
   try {
-    if (!contactReceived.publicKey) {
+    if (!contactReceived.publicKey?.length) {
       return;
     }
     const contactConvo = await getConversationController().getOrCreateAndWait(
@@ -135,9 +135,8 @@ const handleContactReceived = async (
       profilePictre: contactReceived.profilePicture,
     };
 
-    // updateProfile will do a commit for us
-    const timestamp = _.toNumber(isNaN);
-    if (!isNaN(timestamp)) {
+    const existingActiveAt = contactConvo.get('active_at');
+    if (!existingActiveAt || existingActiveAt === 0) {
       contactConvo.set('active_at', _.toNumber(envelope.timestamp));
     }
 

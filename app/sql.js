@@ -1,5 +1,5 @@
 const path = require('path');
-const mkdirp = require('mkdirp');
+const fs = require('fs');
 const rimraf = require('rimraf');
 const SQL = require('better-sqlite3');
 const { app, dialog, clipboard } = require('electron');
@@ -72,6 +72,7 @@ module.exports = {
   getNextExpiringMessage,
   getMessagesByConversation,
   getFirstUnreadMessageIdInConversation,
+  hasConversationOutgoingMessage,
   trimMessages,
 
   getUnprocessedCount,
@@ -109,6 +110,9 @@ module.exports = {
   getV2OpenGroupRoomByRoomId,
   removeV2OpenGroupRoom,
   removeOneOpenGroupV1Message,
+
+  // dev performance testing
+  fillWithTestData,
 };
 
 const CONVERSATIONS_TABLE = 'conversations';
@@ -836,6 +840,7 @@ const LOKI_SCHEMA_VERSIONS = [
   updateToLokiSchemaVersion15,
   updateToLokiSchemaVersion16,
   updateToLokiSchemaVersion17,
+  updateToLokiSchemaVersion18,
 ];
 
 function updateToLokiSchemaVersion1(currentVersion, db) {
@@ -1231,13 +1236,35 @@ function updateToLokiSchemaVersion16(currentVersion, db) {
 
 function updateToLokiSchemaVersion17(currentVersion, db) {
   const targetVersion = 17;
-  // if (currentVersion >= targetVersion) {
-  //   return;
-  // }
+  if (currentVersion >= targetVersion) {
+    return;
+  }
+  console.log(`updateToLokiSchemaVersion${targetVersion}: starting...`);
+
+  db.transaction(() => {
+    db.exec(`
+      UPDATE ${CONVERSATIONS_TABLE} SET
+      json = json_set(json, '$.isApproved', 1)
+    `);
+    // remove the moderators field. As it was only used for opengroups a long time ago and whatever is there is probably unused
+    db.exec(`
+      UPDATE ${CONVERSATIONS_TABLE} SET
+      json = json_remove(json, '$.moderators', '$.dataMessage', '$.accessKey', '$.profileSharing', '$.sessionRestoreSeen')
+    `);
+    writeLokiSchemaVersion(targetVersion, db);
+  })();
+  console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
+}
+
+function updateToLokiSchemaVersion18(currentVersion, db) {
+  const targetVersion = 18;
+  if (currentVersion >= targetVersion) {
+    return;
+  }
   console.log(`updateToLokiSchemaVersion${targetVersion}: starting...`);
 
   // Dropping all pre-existing schema relating to message searching.
-  // Re-migrating everything
+  // Recreating the full text search and related triggers
   db.transaction(() => {
     db.exec(`
       DROP TRIGGER IF EXISTS messages_on_insert;
@@ -1254,10 +1281,8 @@ function updateToLokiSchemaVersion17(currentVersion, db) {
     -- Then we create our full-text search table and populate it
     CREATE VIRTUAL TABLE ${MESSAGES_FTS_TABLE}
       USING fts5(id UNINDEXED, body);
-
     INSERT INTO ${MESSAGES_FTS_TABLE}(id, body)
       SELECT id, body FROM ${MESSAGES_TABLE};
-
     -- Then we set up triggers to keep the full-text search table up to date
     CREATE TRIGGER messages_on_insert AFTER INSERT ON ${MESSAGES_TABLE} BEGIN
       INSERT INTO ${MESSAGES_FTS_TABLE} (
@@ -1285,7 +1310,6 @@ function updateToLokiSchemaVersion17(currentVersion, db) {
 
     writeLokiSchemaVersion(targetVersion, db);
   })();
-
   console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
 }
 
@@ -1354,8 +1378,7 @@ let databaseFilePath;
 
 function _initializePaths(configDir) {
   const dbDir = path.join(configDir, 'sql');
-  mkdirp.sync(dbDir);
-
+  fs.mkdirSync(dbDir, { recursive: true });
   databaseFilePath = path.join(dbDir, 'db.sqlite');
 }
 
@@ -1400,7 +1423,9 @@ function initialize({ configDir, key, messages, passwordAttempt }) {
     // Clear any already deleted db entries on each app start.
     vacuumDatabase(db);
     const msgCount = getMessageCount();
-    console.warn('total message count: ', msgCount);
+    const convoCount = getConversationCount();
+    console.info('total message count: ', msgCount);
+    console.info('total conversation count: ', convoCount);
   } catch (error) {
     if (passwordAttempt) {
       throw error;
@@ -2189,7 +2214,6 @@ function getUnreadCountByConversation(conversationId) {
 
 // Note: Sorting here is necessary for getting the last message (with limit 1)
 // be sure to update the sorting order to sort messages on redux too (sortMessages)
-
 function getMessagesByConversation(
   conversationId,
   { limit = 100, receivedAt = Number.MAX_VALUE, type = '%' } = {}
@@ -2212,6 +2236,27 @@ function getMessagesByConversation(
       type,
     });
   return map(rows, row => jsonToObject(row.json));
+}
+
+function hasConversationOutgoingMessage(conversationId) {
+  const row = globalInstance
+    .prepare(
+      `
+    SELECT count(*)  FROM ${MESSAGES_TABLE} WHERE
+      conversationId = $conversationId AND
+      type IS 'outgoing'
+    `
+    )
+    .get({
+      conversationId,
+    });
+  if (!row) {
+    throw new Error('hasConversationOutgoingMessage: Unable to get coun');
+  }
+
+  console.warn('hasConversationOutgoingMessage', row);
+
+  return Boolean(row['count(*)']);
 }
 
 function getFirstUnreadMessageIdInConversation(conversationId) {
@@ -2965,4 +3010,109 @@ function removeOneOpenGroupV1Message() {
   console.timeEnd('removeOneOpenGroupV1Message');
 
   return toRemoveCount - 1;
+}
+
+/**
+ * Only using this for development. Populate conversation and message tables.
+ * @param {*} numConvosToAdd
+ * @param {*} numMsgsToAdd
+ */
+function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
+  const convoBeforeCount = globalInstance
+    .prepare(`SELECT count(*) from ${CONVERSATIONS_TABLE};`)
+    .get()['count(*)'];
+
+  const lipsum =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis ac ornare lorem, non suscipit purus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse cursus aliquet velit a dignissim. Integer at nisi sed velit consequat dictum. Phasellus congue tellus ante. Ut rutrum hendrerit dapibus. Fusce luctus, ante nec interdum molestie, purus urna volutpat turpis, eget mattis lectus velit at velit. Praesent vel tellus turpis. Praesent eget purus at nisl blandit pharetra.  Cras dapibus sem vitae rutrum dapibus. Vivamus vitae mi ante. Donec aliquam porta nibh, vel scelerisque orci condimentum sed. Proin in mattis ipsum, ac euismod sem. Donec malesuada sem nisl, at vehicula ante efficitur sed. Curabitur in sapien eros. Morbi tempor ante ut metus scelerisque condimentum. Integer sit amet tempus nulla. Vivamus imperdiet dui ac luctus vulputate.  Sed a accumsan risus. Nulla facilisi. Nulla mauris dui, luctus in sagittis at, sodales id mauris. Integer efficitur viverra ex, ut dignissim eros tincidunt placerat. Sed facilisis gravida mauris in luctus. Fusce dapibus, est vitae tincidunt eleifend, justo odio porta dui, sed ultrices mi arcu vitae ante. Mauris ut libero erat. Nam ut mi quis ante tincidunt facilisis sit amet id enim. Vestibulum in molestie mi. In ac felis est. Vestibulum vel blandit ex. Morbi vitae viverra augue. Ut turpis quam, cursus quis ex a, convallis ullamcorper purus.  Nam eget libero arcu. Integer fermentum enim nunc, non consequat urna fermentum condimentum. Nulla vitae malesuada est. Donec imperdiet tortor interdum malesuada feugiat. Integer pulvinar dui ex, eget tristique arcu mattis at. Nam eu neque eget mauris varius suscipit. Quisque ac enim vitae mauris laoreet congue nec sed justo. Curabitur fermentum quam eget est tincidunt, at faucibus lacus maximus.  Donec auctor enim dolor, faucibus egestas diam consectetur sed. Donec eget rutrum arcu, at tempus mi. Fusce quis volutpat sapien. In aliquet fringilla purus. Ut eu nunc non augue lacinia ultrices at eget tortor. Maecenas pulvinar odio sit amet purus elementum, a vehicula lorem maximus. Pellentesque eu lorem magna. Vestibulum ut facilisis lorem. Proin et enim cursus, vulputate neque sit amet, posuere enim. Praesent faucibus tellus vel mi tincidunt, nec malesuada nibh malesuada. In laoreet sapien vitae aliquet sollicitudin.';
+
+  const msgBeforeCount = globalInstance.prepare(`SELECT count(*) from ${MESSAGES_TABLE};`).get()[
+    'count(*)'
+  ];
+
+  console.warn('==== fillWithTestData ====');
+  console.warn({
+    convoBeforeCount,
+    msgBeforeCount,
+    convoToAdd: numConvosToAdd,
+    msgToAdd: numMsgsToAdd,
+  });
+
+  const convosIdsAdded = [];
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < numConvosToAdd; index++) {
+    const activeAt = Date.now() - index;
+    const id = Date.now() - 1000 * index;
+    const convoObjToAdd = {
+      active_at: activeAt,
+      members: [],
+      profileName: `${activeAt}`,
+      name: `${activeAt}`,
+      id: `05${id}`,
+      type: 'group',
+    };
+    convosIdsAdded.push(id);
+    try {
+      saveConversation(convoObjToAdd);
+      // eslint-disable-next-line no-empty
+    } catch (e) {}
+  }
+  console.warn('convosIdsAdded', convosIdsAdded);
+  // eslint-disable-next-line no-plusplus
+  for (let index = 0; index < numMsgsToAdd; index++) {
+    const activeAt = Date.now() - index;
+    const id = Date.now() - 1000 * index;
+
+    const lipsumStartIdx = Math.floor(Math.random() * lipsum.length);
+    const lipsumLength = Math.floor(Math.random() * lipsum.length - lipsumStartIdx);
+    const fakeBodyText = lipsum.substring(lipsumStartIdx, lipsumStartIdx + lipsumLength);
+
+    const convoId = convosIdsAdded[Math.floor(Math.random() * convosIdsAdded.length)];
+    const msgObjToAdd = {
+      // body: `fake body ${activeAt}`,
+      body: `fakeMsgIdx-spongebob-${index} ${fakeBodyText} ${activeAt}`,
+      conversationId: `${convoId}`,
+      // eslint-disable-next-line camelcase
+      expires_at: 0,
+      hasAttachments: 0,
+      hasFileAttachments: 0,
+      hasVisualMediaAttachments: 0,
+      id: `${id}`,
+      serverId: 0,
+      serverTimestamp: 0,
+      // eslint-disable-next-line camelcase
+      received_at: Date.now(),
+      schemaVersion: 5,
+      sent: 0,
+      // eslint-disable-next-line camelcase
+      sent_at: Date.now(),
+      source: `${convoId}`,
+      sourceDevice: 1,
+      type: '%',
+      unread: 1,
+      expireTimer: 0,
+      expirationStartTimestamp: 0,
+    };
+
+    if (convoId % 10 === 0) {
+      console.info('uyo , convoId ', { index, convoId });
+    }
+
+    try {
+      saveMessage(msgObjToAdd);
+      // eslint-disable-next-line no-empty
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  const convoAfterCount = globalInstance
+    .prepare(`SELECT count(*) from ${CONVERSATIONS_TABLE};`)
+    .get()['count(*)'];
+
+  const msgAfterCount = globalInstance.prepare(`SELECT count(*) from ${MESSAGES_TABLE};`).get()[
+    'count(*)'
+  ];
+
+  console.warn({ convoAfterCount, msgAfterCount });
+  return convosIdsAdded;
 }

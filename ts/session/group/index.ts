@@ -27,9 +27,9 @@ import { ClosedGroupEncryptionPairMessage } from '../messages/outgoing/controlMe
 import { ClosedGroupNameChangeMessage } from '../messages/outgoing/controlMessage/group/ClosedGroupNameChangeMessage';
 import { ClosedGroupNewMessage } from '../messages/outgoing/controlMessage/group/ClosedGroupNewMessage';
 import { ClosedGroupRemovedMembersMessage } from '../messages/outgoing/controlMessage/group/ClosedGroupRemovedMembersMessage';
-import { updateOpenGroupV2 } from '../../opengroup/opengroupV2/OpenGroupUpdate';
-import { getSwarmPollingInstance } from '../snode_api';
-import { getLatestTimestampOffset } from '../snode_api/SNodeAPI';
+import { updateOpenGroupV2 } from '../apis/open_group_api/opengroupV2/OpenGroupUpdate';
+import { getSwarmPollingInstance } from '../apis/snode_api';
+import { getLatestTimestampOffset } from '../apis/snode_api/SNodeAPI';
 
 export type GroupInfo = {
   id: string;

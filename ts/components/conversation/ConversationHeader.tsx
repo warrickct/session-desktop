@@ -1,11 +1,7 @@
 import React from 'react';
 
-import { Avatar, AvatarSize } from '../Avatar';
+import { Avatar, AvatarSize } from '../avatar/Avatar';
 
-import { SessionIconButton } from '../session/icon';
-
-import { SessionButton, SessionButtonColor, SessionButtonType } from '../session/SessionButton';
-import { MemoConversationHeaderMenu } from '../session/menu/ConversationHeaderMenu';
 import { contextMenu } from 'react-contexify';
 import styled from 'styled-components';
 import { ConversationNotificationSettingType } from '../../models/conversation';
@@ -13,6 +9,7 @@ import {
   getConversationHeaderProps,
   getConversationHeaderTitleProps,
   getCurrentNotificationSettingText,
+  getIsSelectedBlocked,
   getIsSelectedNoteToSelf,
   getIsSelectedPrivate,
   getSelectedConversationIsPublic,
@@ -37,6 +34,9 @@ import {
 import { callRecipient } from '../../interactions/conversationInteractions';
 import { getHasIncomingCall, getHasOngoingCall } from '../../state/selectors/call';
 import { useConversationUsername } from '../../hooks/useParamSelector';
+import { SessionButton, SessionButtonColor, SessionButtonType } from '../basic/SessionButton';
+import { SessionIconButton } from '../icon';
+import { MemoConversationHeaderMenu } from '../menu/ConversationHeaderMenu';
 
 export interface TimerOption {
   name: string;
@@ -198,6 +198,7 @@ const BackButton = (props: { onGoBack: () => void; showBackButton: boolean }) =>
 
 const CallButton = () => {
   const isPrivate = useSelector(getIsSelectedPrivate);
+  const isBlocked = useSelector(getIsSelectedBlocked);
   const isMe = useSelector(getIsSelectedNoteToSelf);
   const selectedConvoKey = useSelector(getSelectedConversationKey);
 
@@ -205,7 +206,7 @@ const CallButton = () => {
   const hasOngoingCall = useSelector(getHasOngoingCall);
   const canCall = !(hasIncomingCall || hasOngoingCall);
 
-  if (!isPrivate || isMe || !selectedConvoKey) {
+  if (!isPrivate || isMe || !selectedConvoKey || isBlocked) {
     return null;
   }
 
