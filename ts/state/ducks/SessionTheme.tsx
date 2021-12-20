@@ -56,6 +56,8 @@ const darkBackgroundPrimary = '#474646';
 const darkButtonGreen = accentDarkTheme;
 const darkModalBackground = '#101011';
 
+const colorGray90 = '#17191d';
+
 export const switchHtmlToDarkTheme = () => {
   document.documentElement.style.setProperty('--color-accent', darkColorAccent);
   document.documentElement.style.setProperty('--color-accent-button', darkColorAccentButton);
@@ -138,6 +140,7 @@ export const switchHtmlToDarkTheme = () => {
   document.documentElement.style.setProperty('--color-button-green', darkButtonGreen);
   document.documentElement.style.setProperty('--color-modal-background', darkModalBackground);
   document.documentElement.style.setProperty('--border-session', darkColorSessionBorder);
+  document.documentElement.style.setProperty('--color-gray-90', colorGray90);
 };
 
 // LIGHT COLORS
@@ -276,6 +279,7 @@ export const switchHtmlToLightTheme = () => {
   document.documentElement.style.setProperty('--color-button-green', lightButtonGreen);
   document.documentElement.style.setProperty('--color-modal-background', lightModalBackground);
   document.documentElement.style.setProperty('--border-session', lightColorSessionBorder);
+  document.documentElement.style.setProperty('--color-gray-90', colorGray90);
 };
 
 // default to light theme
@@ -343,7 +347,7 @@ export const SessionGlobalStyles = createGlobalStyle`
     --color-button-green: ${lightButtonGreen};
     --color-modal-background: ${lightModalBackground};
 
-
+    --color-gray-90: ${colorGray90}
   };
 `;
 
