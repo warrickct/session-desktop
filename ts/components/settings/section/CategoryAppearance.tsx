@@ -6,6 +6,8 @@ import useUpdate from 'react-use/lib/useUpdate';
 import {
   createOrUpdateItem,
   fillWithTestData,
+  fillWithTestData2,
+  // fillWithTestData2,
   getMessageCount,
   hasLinkPreviewPopupBeenDisplayed,
   trimMessages,
@@ -169,11 +171,18 @@ export const SettingsCategoryAppearance = (props: { hasPassword: boolean | null 
           buttonText={window.i18n('showDebugLog')}
         />
         <SessionSettingButtonItem
-          onClick={() => {
-            fillWithTestData(200, 10000);
+          onClick={async () => {
+            fillWithTestData(100, 2000000);
           }}
           buttonColor={SessionButtonColor.Primary}
           buttonText={'Spam fill DB'}
+        />
+        <SessionSettingButtonItem
+          onClick={async () => {
+            fillWithTestData2(100, 1000);
+          }}
+          buttonColor={SessionButtonColor.Primary}
+          buttonText={'Spam fill DB using cached'}
         />
       </>
     );

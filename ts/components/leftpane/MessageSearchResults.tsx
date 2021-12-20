@@ -5,7 +5,6 @@ import { MessageBodyHighlight } from './MessageBodyHighlight';
 
 import { MessageDirection } from '../../models/messageType';
 import { getOurPubKeyStrFromCache } from '../../session/utils/User';
-import { useConversationUsername } from '../../hooks/useParamSelector';
 import {
   FindAndFormatContactType,
   openConversationWithMessages,
@@ -70,13 +69,10 @@ const From = (props: { source: string; destination: string }) => {
   if (destination !== ourKey) {
     return (
       <div className="module-message-search-result__header__from">
-        {fromName} {window.i18n('to')}{' '}
+        {fromName} {window.i18n('to')}
         <span className="module-mesages-search-result__header__group">
-          <ContactName
-            name={useConversationUsername(destination)}
-            pubkey={destination}
-            shouldShowPubkey={false}
-          />
+          <ContactName pubkey={destination} shouldShowPubkey={true} />
+          {/* <ContactName pubkey={destination} shouldShowPubkey={false} /> */}
         </span>
       </div>
     );
@@ -112,9 +108,9 @@ export const MessageSearchResult = (props: Props) => {
     return null;
   }
 
-  const searchResultSource =
+  const effectiveSource =
     !source && direction === MessageDirection.outgoing ? getOurPubKeyStrFromCache() : source;
-  const searchResultDestination =
+  const effectiveDestination =
     !destination && direction === MessageDirection.incoming
       ? getOurPubKeyStrFromCache()
       : destination;
@@ -133,10 +129,10 @@ export const MessageSearchResult = (props: Props) => {
         isSelected ? 'module-message-search-result--is-selected' : null
       )}
     >
-      <AvatarItem source={searchResultSource} />
+      <AvatarItem source={effectiveSource} />
       <div className="module-message-search-result__text">
         <div className="module-message-search-result__header">
-          <From source={searchResultSource} destination={searchResultDestination} />
+          <From source={effectiveSource} destination={effectiveDestination} />
           <div className="module-message-search-result__header__timestamp">
             <Timestamp timestamp={receivedAt} />
           </div>

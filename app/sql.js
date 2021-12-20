@@ -2214,7 +2214,6 @@ function getUnreadCountByConversation(conversationId) {
 
 // Note: Sorting here is necessary for getting the last message (with limit 1)
 // be sure to update the sorting order to sort messages on redux too (sortMessages)
-
 function getMessagesByConversation(
   conversationId,
   { limit = 100, receivedAt = Number.MAX_VALUE, type = '%' } = {}
@@ -3064,13 +3063,13 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
     const id = Date.now() - 1000 * index;
 
     const lipsumStartIdx = Math.floor(Math.random() * lipsum.length);
-    const lipsumLength = Math.floor(Math.random() * 500);
-    const fakeBodyText = lipsum.substring(lipsumStartIdx, lipsumStartIdx + length);
+    const lipsumLength = Math.floor(Math.random() * lipsum.length - lipsumStartIdx);
+    const fakeBodyText = lipsum.substring(lipsumStartIdx, lipsumStartIdx + lipsumLength);
 
     const convoId = convosIdsAdded[Math.floor(Math.random() * convosIdsAdded.length)];
     const msgObjToAdd = {
       // body: `fake body ${activeAt}`,
-      body: `fakeMsgIdx-${index} ${fakeBodyText} ${activeAt}`,
+      body: `fakeMsgIdx-spongebob-${index} ${fakeBodyText} ${activeAt}`,
       conversationId: `${convoId}`,
       // eslint-disable-next-line camelcase
       expires_at: 0,
@@ -3088,7 +3087,7 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
       sent_at: Date.now(),
       source: `${convoId}`,
       sourceDevice: 1,
-      type: 'outgoing',
+      type: '%',
       unread: 1,
       expireTimer: 0,
       expirationStartTimestamp: 0,
@@ -3115,4 +3114,5 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
   ];
 
   console.warn({ convoAfterCount, msgAfterCount });
+  return convosIdsAdded;
 }
