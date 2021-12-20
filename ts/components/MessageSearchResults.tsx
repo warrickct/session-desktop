@@ -1,7 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
 
-import { Avatar, AvatarSize } from './Avatar';
 import { MessageBodyHighlight } from './MessageBodyHighlight';
 import { Timestamp } from './conversation/Timestamp';
 import { ContactName } from './conversation/ContactName';
@@ -13,6 +12,7 @@ import {
 import { getOurPubKeyStrFromCache } from '../session/utils/User';
 import { useConversationUsername } from '../hooks/useParamSelector';
 import { MessageDirection } from '../models/messageType';
+import { Avatar, AvatarSize } from './avatar/Avatar';
 
 type PropsHousekeeping = {
   isSelected?: boolean;

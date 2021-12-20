@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { MessageBody } from './conversation/MessageBody';
 import { Emojify } from './conversation/Emojify';
 import { AddNewLines } from './conversation/AddNewLines';
 
 import { SizeClassType } from '../util/emoji';
 
 import { RenderTextCallbackType } from '../types/Util';
+import { MessageBody } from './conversation/message/message-content/MessageBody';
 
 interface Props {
   text: string;
