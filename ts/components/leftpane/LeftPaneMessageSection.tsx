@@ -65,7 +65,7 @@ export class LeftPaneMessageSection extends React.Component<Props> {
     const contacts = searchResults?.contacts || [];
 
     if (searchResults) {
-      return <SearchResults {...searchResults} contacts={contacts} />;
+      return <SearchResults {...searchResults} />;
     }
 
     if (!conversations) {

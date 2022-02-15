@@ -840,7 +840,6 @@ const LOKI_SCHEMA_VERSIONS = [
   updateToLokiSchemaVersion17,
   updateToLokiSchemaVersion18,
   updateToLokiSchemaVersion19,
-  updateToLokiSchemaVersion20,
 ];
 
 function updateToLokiSchemaVersion1(currentVersion, db) {
@@ -1371,6 +1370,43 @@ function updateToLokiSchemaVersion20(currentVersion, db) {
     writeLokiSchemaVersion(targetVersion, db);
   })();
 
+  console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
+}
+
+function updateToLokiSchemaVersion21(currentVersion, db) {
+  const targetVersion = 21;
+  if (currentVersion >= targetVersion) {
+    return;
+  }
+
+  console.log(`updateToLokiSchemaVersion${targetVersion}: starting...`);
+  db.transaction(() => {
+    // looking for all private conversations, with a nickname set
+    const rowsToUpdate = db
+      .prepare(
+        `SELECT * FROM ${CONVERSATIONS_TABLE} WHERE type = 'private' AND (name IS NULL or name = '') AND json_extract(json, '$.nickname') <> '';`
+      )
+      .all();
+    (rowsToUpdate || []).forEach(r => {
+      const obj = jsonToObject(r.json);
+
+      // obj.profile.displayName is the display as this user set it.
+      if (
+        obj &&
+        obj.nickname &&
+        obj.nickname.length &&
+        obj.profile &&
+        obj.profile.displayName &&
+        obj.profile.displayName.length
+      ) {
+        // this one has a nickname set, but name is unset, set it to the displayName in the lokiProfile if it's exisitng
+        obj.name = obj.profile.displayName;
+        updateConversation(obj, db);
+      }
+    });
+
+    writeLokiSchemaVersion(targetVersion, db);
+  })();
   console.log(`updateToLokiSchemaVersion${targetVersion}: success!`);
 }
 
@@ -2269,19 +2305,58 @@ function getUnreadCountByConversation(conversationId) {
 
 // Note: Sorting here is necessary for getting the last message (with limit 1)
 // be sure to update the sorting order to sort messages on redux too (sortMessages)
+const orderByClause = 'ORDER BY COALESCE(serverTimestamp, sent_at, received_at) DESC';
+const orderByClauseASC = 'ORDER BY COALESCE(serverTimestamp, sent_at, received_at) ASC';
 
-function getMessagesByConversation(
-  conversationId,
-  { limit = 100, receivedAt = Number.MAX_VALUE, type = '%' } = {}
-) {
+function getMessagesByConversation(conversationId, { messageId = null } = {}) {
+  const absLimit = 30;
+  // If messageId is given it means we are opening the conversation to that specific messageId,
+  // or that we just scrolled to it by a quote click and needs to load around it.
+  // If messageId is null, it means we are just opening the convo to the last unread message, or at the bottom
+  const firstUnread = getFirstUnreadMessageIdInConversation(conversationId);
+
+  if (messageId || firstUnread) {
+    const messageFound = getMessageById(messageId || firstUnread);
+
+    if (messageFound && messageFound.conversationId === conversationId) {
+      const rows = globalInstance
+        .prepare(
+          `WITH cte AS (
+            SELECT id, conversationId, json, row_number() OVER (${orderByClause}) as row_number
+              FROM ${MESSAGES_TABLE} WHERE conversationId = $conversationId
+          ), current AS (
+          SELECT row_number
+            FROM cte
+          WHERE id = $messageId
+
+        )
+        SELECT cte.*
+          FROM cte, current
+            WHERE ABS(cte.row_number - current.row_number) <= $limit
+          ORDER BY cte.row_number;
+          `
+        )
+        .all({
+          conversationId,
+          messageId: messageId || firstUnread,
+          limit: absLimit,
+        });
+
+      return map(rows, row => jsonToObject(row.json));
+    }
+    console.info(
+      `getMessagesByConversation: Could not find messageId ${messageId} in db with conversationId: ${conversationId}. Just fetching the convo as usual.`
+    );
+  }
+
+  const limit = 2 * absLimit;
+
   const rows = globalInstance
     .prepare(
       `
     SELECT json FROM ${MESSAGES_TABLE} WHERE
-      conversationId = $conversationId AND
-      received_at < $received_at AND
-      type LIKE $type
-      ORDER BY serverTimestamp DESC, serverId DESC, sent_at DESC, received_at DESC
+      conversationId = $conversationId
+      ${orderByClause}
     LIMIT $limit;
     `
     )
@@ -2289,7 +2364,48 @@ function getMessagesByConversation(
       conversationId,
       received_at: receivedAt,
       limit,
-      type,
+    });
+
+  return map(rows, row => jsonToObject(row.json));
+}
+
+function getLastMessagesByConversation(conversationId, limit) {
+  if (!isNumber(limit)) {
+    throw new Error('limit must be a number');
+  }
+
+  const rows = globalInstance
+    .prepare(
+      `
+    SELECT json FROM ${MESSAGES_TABLE} WHERE
+      conversationId = $conversationId
+      ${orderByClause}
+    LIMIT $limit;
+    `
+    )
+    .all({
+      conversationId,
+      limit,
+    });
+  return map(rows, row => jsonToObject(row.json));
+}
+
+/**
+ * This is the oldest message so we cannot reuse getLastMessagesByConversation
+ */
+function getOldestMessageInConversation(conversationId) {
+  const rows = globalInstance
+    .prepare(
+      `
+    SELECT json FROM ${MESSAGES_TABLE} WHERE
+      conversationId = $conversationId
+      ${orderByClauseASC}
+    LIMIT $limit;
+    `
+    )
+    .all({
+      conversationId,
+      limit: 1,
     });
   return map(rows, row => jsonToObject(row.json));
 }
@@ -2327,6 +2443,35 @@ function getFirstUnreadMessageIdInConversation(conversationId) {
     .all({
       conversationId,
       unread: 1,
+    });
+
+  if (rows.length === 0) {
+    return undefined;
+  }
+  return rows[0].id;
+}
+
+function getFirstUnreadMessageWithMention(conversationId, ourpubkey) {
+  if (!ourpubkey || !ourpubkey.length) {
+    throw new Error('getFirstUnreadMessageWithMention needs our pubkey but nothing was given');
+  }
+  const likeMatch = `%@${ourpubkey}%`;
+
+  const rows = globalInstance
+    .prepare(
+      `
+    SELECT id, json FROM ${MESSAGES_TABLE} WHERE
+      conversationId = $conversationId AND
+      unread = $unread AND
+      body LIKE $likeMatch
+      ORDER BY serverTimestamp ASC, serverId ASC, sent_at ASC, received_at ASC
+    LIMIT 1;
+    `
+    )
+    .all({
+      conversationId,
+      unread: 1,
+      likeMatch,
     });
 
   if (rows.length === 0) {
@@ -2997,7 +3142,7 @@ function updateExistingClosedGroupV1ToClosedGroupV2(db) {
       };
       addClosedGroupEncryptionKeyPair(groupId, keyPair, db);
     } catch (e) {
-      console.warn(e);
+      console.error(e);
     }
   });
 }
@@ -3149,7 +3294,7 @@ function removeOneOpenGroupV1Message() {
   if (toRemoveCount <= 0) {
     return 0;
   }
-  console.warn('left opengroupv1 message to remove: ', toRemoveCount);
+  console.info('left opengroupv1 message to remove: ', toRemoveCount);
   const rowMessageIds = globalInstance
     .prepare(
       `SELECT id from ${MESSAGES_TABLE} WHERE conversationId LIKE 'publicChat:1@%' ORDER BY id LIMIT 1;`
@@ -3215,8 +3360,8 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
     'count(*)'
   ];
 
-  console.warn('==== fillWithTestData ====');
-  console.warn({
+  console.info('==== fillWithTestData ====');
+  console.info({
     convoBeforeCount,
     msgBeforeCount,
     convoToAdd: numConvosToAdd,
@@ -3286,7 +3431,7 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
       saveMessage(msgObjToAdd);
       // eslint-disable-next-line no-empty
     } catch (e) {
-      console.warn(e);
+      console.error(e);
     }
   }
 
@@ -3298,6 +3443,6 @@ function fillWithTestData(numConvosToAdd, numMsgsToAdd) {
     'count(*)'
   ];
 
-  console.warn({ convoAfterCount, msgAfterCount });
+  console.info({ convoAfterCount, msgAfterCount });
   return convosIdsAdded;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useLayoutEffect } from 'react';
 import { useSelector } from 'react-redux';
 // tslint:disable-next-line: no-submodule-imports
 import useKey from 'react-use/lib/useKey';
@@ -15,7 +15,7 @@ import {
 } from '../../state/ducks/conversations';
 import { getSortedMessagesTypesOfSelectedConversation } from '../../state/selectors/conversations';
 import { GroupUpdateMessage } from './message/message-item/GroupUpdateMessage';
-import { MessageRequestResponse } from './message/message-item/MessageRequestResponse';
+import { DataExtractionNotification } from './message/message-item/DataExtractionNotification';
 import { MessageDateBreak } from './message/message-item/DateBreak';
 import { GroupInvitation } from './message/message-item/GroupInvitation';
 import { Message } from './message/message-item/Message';
@@ -63,7 +63,7 @@ export const SessionMessagesList = (props: {
       {messagesProps.map(messageProps => {
         const messageId = messageProps.message.props.messageId;
         const unreadIndicator = messageProps.showUnreadIndicator ? (
-          <SessionLastSeenIndicator key={`unread-indicator-${messageId}`} />
+          <SessionLastSeenIndicator key={`unread-indicator-${messageId}`} messageId={messageId} />
         ) : null;
 
         const dateBreak =
@@ -120,15 +120,7 @@ export const SessionMessagesList = (props: {
           return null;
         }
 
-        return [
-          <Message
-            messageId={messageId}
-            onQuoteClick={props.scrollToQuoteMessage}
-            key={messageId}
-          />,
-          dateBreak,
-          unreadIndicator,
-        ];
+        return [<Message messageId={messageId} key={messageId} />, dateBreak, unreadIndicator];
       })}
     </>
   );
