@@ -23,7 +23,6 @@ import { processNewAttachment } from '../../../../types/MessageAttachment';
 import { MIME } from '../../../../types';
 import { handleOpenGroupV2Message } from '../../../../receiver/opengroup';
 import { batchPoll } from './OpenGroupAPIBatchPoll';
-import { capabilitiesFetchEverything } from './OpenGroupCapabilityPoll';
 
 const pollForEverythingInterval = DURATION.SECONDS * 10;
 const pollForRoomAvatarInterval = DURATION.DAYS * 1;

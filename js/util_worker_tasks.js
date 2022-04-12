@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 /* eslint-disable strict */
 
+const { to_hex } = require('libsodium-wrappers-sumo');
+
 const functions = {
   arrayBufferToStringBase64,
   fromBase64ToArrayBuffer,

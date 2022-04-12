@@ -1,4 +1,4 @@
-import { default as insecureNodeFetch, RequestInit } from 'node-fetch';
+import { default as insecureNodeFetch, RequestInit, Response } from 'node-fetch';
 import https from 'https';
 
 import { dropSnodeFromSnodePool, dropSnodeFromSwarmIfNeeded, updateSwarmFor } from './snodePool';
@@ -17,6 +17,7 @@ import { Onions } from '.';
 import { hrefPnServerDev, hrefPnServerProd } from '../push_notification_api/PnServer';
 import { encodeV4Request } from '../open_group_api/opengroupV2/OpenGroupPollingUtils';
 import { textToArrayBuffer } from '../open_group_api/opengroupV2/ApiUtil';
+import { to_hex } from 'libsodium-wrappers-sumo';
 
 export const resetSnodeFailureCount = () => {
   snodeFailureCount = {};
@@ -50,17 +51,16 @@ export const CLOCK_OUT_OF_SYNC_MESSAGE_ERROR =
 async function encryptForPubKey(
   pubKeyX25519hex: string,
   requestInfo: any,
-  useV4: boolean = false
+  useV4: boolean
 ): Promise<DestinationContext> {
   if (useV4) {
-    const plaintext = encodeV4Request(requestInfo);
-    return window.callWorker('encryptForPubkey', pubKeyX25519hex, plaintext);
-  } else {
-    // regular non-v4
-    const textEncoder = new TextEncoder();
-    const plaintext = textEncoder.encode(JSON.stringify(requestInfo));
-    return window.callWorker('encryptForPubkey', pubKeyX25519hex, plaintext);
+    return window.callWorker('encryptForPubkey', pubKeyX25519hex, encodeV4Request(requestInfo));
   }
+
+  // regular non-v4
+  const textEncoder = new TextEncoder();
+  const plaintext = textEncoder.encode(JSON.stringify(requestInfo));
+  return window.callWorker('encryptForPubkey', pubKeyX25519hex, plaintext);
 }
 
 export type DestinationRelayV2 = {
@@ -135,14 +135,13 @@ async function buildOnionCtxs(
 
       const isCallToPn =
         finalRelayOptions?.host === hrefPnServerDev || finalRelayOptions?.host === hrefPnServerProd;
+
       if (!isCallToPn) {
         target = '/loki/v3/lsrpc';
       }
-
-      if (useV4 === true) {
+      if (useV4) {
         target = '/oxen/v4/lsrpc';
       }
-
       dest = {
         host: finalRelayOptions.host,
         target,
@@ -528,12 +527,11 @@ export async function processOnionResponse({
 export async function processOnionResponseV4({
   response,
   symmetricKey,
-  guardNode,
+  // guardNode,
   abortSignal,
-  associatedWith,
-  lsrpcEd25519Key,
-}: {
-  // response?: { text: () => Promise<string>; status: number };
+}: // associatedWith,
+// lsrpcEd25519Key,
+{
   response?: Response;
   symmetricKey?: ArrayBuffer;
   guardNode: Snode;
@@ -548,19 +546,18 @@ export async function processOnionResponseV4({
     window?.log?.error('No symmetric key to decode response.');
     return;
   }
+  console.warn('decoding symmetric key', to_hex(new Uint8Array(symmetricKey)));
 
-  const cipherText = (await response?.text()) || '';
-  console.warn({ cipherText });
+  const cipherText = (await response?.arrayBuffer()) || [];
 
-  const arrBuff = await textToArrayBuffer(cipherText);
+  // const arrBuff = await textToArrayBuffer(cipherText);
   const plaintextBuffer = await window.callWorker(
-    // 'DecryptAESGCM',
     'DecryptAESGCM',
     new Uint8Array(symmetricKey),
-    new Uint8Array(arrBuff)
+    new Uint8Array(cipherText)
   );
   console.warn({ plaintextBuffer });
-
+  return plaintextBuffer;
 }
 
 export const snodeHttpsAgent = new https.Agent({
@@ -828,6 +825,8 @@ const sendOnionRequest = async ({
 
       const plaintext = encodeCiphertextPlusJson(bodyEncoded, options);
       destCtx = await window.callWorker('encryptForPubkey', destX25519hex, plaintext);
+    } else {
+      destCtx = await encryptForPubKey(destX25519hex, options, Boolean(useV4));
     }
   } catch (e) {
     window?.log?.error(
@@ -835,19 +834,13 @@ const sendOnionRequest = async ({
       e.code,
       e.message,
       '] destination X25519',
-      destX25519hex.substr(0, 32),
+      destX25519hex.substring(0, 32),
       '...',
-      destX25519hex.substr(32),
+      destX25519hex.substring(32),
       'options',
       options
     );
     throw e;
-  }
-
-  if (useV4) {
-    destCtx = await encryptForPubKey(destX25519hex, options, useV4);
-  } else {
-    destCtx = await encryptForPubKey(destX25519hex, options);
   }
 
   const payload = await buildOnionGuardNodePayload(
